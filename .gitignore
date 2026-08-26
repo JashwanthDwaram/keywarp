@@ -1,0 +1,42 @@
+# Node
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment Variables & Keys
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Agent & AI tool metadata
+.agent/
+.agents/
+.codex/
+.cursor/
+.gemini/
+.impeccable/
+skills-lock.json

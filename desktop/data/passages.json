@@ -1,0 +1,62 @@
+{
+  "Easy": [
+    "The quick brown fox jumps over the lazy dog every morning.",
+    "A small cup of warm tea can brighten any rainy afternoon.",
+    "Sunlight filtered gently through the green leaves in the park.",
+    "Music filled the quiet room as the children began to dance.",
+    "She loved to read books by the warm fire during cold winter nights.",
+    "The gentle sound of falling rain brings peace to a busy day.",
+    "Walking through the quiet forest, they found a clear blue lake.",
+    "Fresh bread from the local bakery smelled delicious in the morning air.",
+    "Stars twinkled brightly in the dark night sky above the sleepy town.",
+    "A faithful friend is a strong shelter in times of stormy weather.",
+    "Birds sang cheerful songs from the high branches of the old oak tree.",
+    "The golden sun set slowly behind the rolling hills in the west.",
+    "Laughter echoed across the playground as the games continued until dusk.",
+    "He kept a small notebook in his pocket to write down new ideas.",
+    "The sweet fragrance of spring flowers filled the open meadow.",
+    "Summer breezes carried the quiet whisper of waves crashing on the shore."
+  ],
+  "Medium": [
+    "Software engineering is the systematic approach to the development, operation, and maintenance of software systems with high reliability.",
+    "Learning to type without looking at the keyboard is called touch typing. It significantly boosts your productivity and mental focus.",
+    "Data analysis allows us to uncover hidden patterns, correlations, and insights from raw datasets to make informed strategic decisions.",
+    "The ocean covers more than seventy percent of the Earth's surface, holding ninety-seven percent of our planet's total water supply.",
+    "Curiosity is the engine of intellectual growth, driving individuals to ask deeper questions and discover innovative solutions.",
+    "Mastery in any craft comes from deliberate practice, where one focuses on weak points and embraces constructive feedback.",
+    "Artificial intelligence models process vast amounts of unstructured data to generate predictions and automate complex tasks.",
+    "The human brain contains approximately eighty-six billion neurons, each forming thousands of synaptic connections with neighbors.",
+    "Clean code reads like well-written prose, making architectural intent obvious to collaborators and future maintainers.",
+    "Renewable energy technologies like solar photovoltaics and offshore wind turbines are essential for a sustainable future.",
+    "Effective communication requires active listening, empathy, and the ability to articulate complex thoughts with clarity.",
+    "Space exploration expands our scientific horizons and challenges human ingenuity to solve unprecedented engineering hurdles.",
+    "Consistency over long periods produces compounding returns in skill development, knowledge acquisition, and physical fitness."
+  ],
+  "Hard": [
+    "In asynchronous programming (e.g., Python's asyncio or JavaScript's Promises), non-blocking I/O operations achieve concurrency without multi-threading overhead.",
+    "Quantum computing leverages superposition and entanglement phenomena (qubits: |0> & |1>) to solve intractable polynomial-time algorithmic problems.",
+    "Cryptographic hash functions like SHA-256 (Secure Hash Algorithm 256-bit) map arbitrary-length binary inputs to deterministic 64-character hexadecimal digests.",
+    "Microservices architectures decouple monolithic systems into autonomous, loosely coupled services communicating via REST APIs or gRPC protocols.",
+    "The algorithmic complexity of matrix multiplication scales from O(N^3) standard naive implementations down to O(N^2.37) using Strassen-like optimizations.",
+    "Epistemological inquiries investigate the nature, origin, and scope of human knowledge, distinguishing justified belief from mere opinion.",
+    "Distributed consensus protocols, such as Paxos and Raft, ensure state-machine replication across fault-tolerant nodes in decentralized networks.",
+    "Neuroplasticity enables the central nervous system to dynamically reorganize its neural pathways in response to novel cognitive stimuli and physical trauma.",
+    "Zero-knowledge succinct non-interactive arguments of knowledge (zk-SNARKs) allow one party to prove ownership of a statement without disclosing the underlying payload."
+  ],
+  "Code": [
+    "def calculate_wpm(characters: int, seconds: float) -> float:\n    if seconds <= 0: return 0.0\n    return round((characters / 5.0) / (seconds / 60.0), 2)",
+    "const fetchMetrics = async (userId: string): Promise<UserStats> => {\n    const res = await api.get(`/stats/${userId}`);\n    return res.data;\n};",
+    "import pandas as pd\ndf = pd.read_csv('history.csv')\navg_wpm = df.groupby('mode')['net_wpm'].mean().round(1)",
+    "class TypingSession:\n    def __init__(self, target_text: str):\n        self.target = target_text\n        self.typed = []\n        self.errors = 0",
+    "async function fetchTelemetry(endpoint: string, retries = 3): Promise<Response> {\n  for (let attempt = 1; attempt <= retries; attempt++) {\n    try {\n      return await fetch(endpoint);\n    } catch (err) {\n      if (attempt === retries) throw err;\n    }\n  }\n  throw new Error('Unreachable');\n}"
+  ],
+  "Quotes": [
+    "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Don't settle. — Steve Jobs",
+    "Simplicity is prerequisite for reliability. Complex systems always fail in complex, unexpected ways. — Edsger W. Dijkstra",
+    "Talk is cheap. Show me the code. Software design is about making choices that balance clarity, speed, and maintainability. — Linus Torvalds",
+    "It is during our darkest moments that we must focus to see the light. Knowledge and perseverance conquer all obstacles. — Aristotle",
+    "We are what we repeatedly do. Excellence, then, is not an act, but a habit cultivated through disciplined practice. — Will Durant",
+    "The greatest glory in living lies not in never falling, but in rising every time we fall. — Nelson Mandela",
+    "In the middle of difficulty lies opportunity. Keep moving forward and never let self-doubt dictate your limits. — Albert Einstein"
+  ]
+}

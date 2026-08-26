@@ -1,0 +1,9 @@
+# Ignore Python Desktop App and agent metadata from Vercel deployment
+desktop/
+.agent/
+.agents/
+.codex/
+.cursor/
+.gemini/
+.impeccable/
+skills-lock.json

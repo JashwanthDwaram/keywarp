@@ -1,0 +1,265 @@
+import React, { useState, useMemo, useRef } from 'react';
+import { Award, Target, BarChart2, TrendingUp, AlertTriangle, RotateCcw, Download, Upload, Check } from 'lucide-react';
+import { TypingRecord } from '../../types';
+import { MetricCard } from '../ui/MetricCard';
+import { ProgressionChart } from './ProgressionChart';
+import { MistakeMatrix } from './MistakeMatrix';
+import { SessionHistoryTable } from './SessionHistoryTable';
+import { ActivityHeatmap } from './ActivityHeatmap';
+import { FingerDiagnostics } from './FingerDiagnostics';
+import { AchievementsGrid } from './AchievementsGrid';
+import { Button } from '../ui/Button';
+import { exportRecordsToJson, parseImportedJson } from '../../utils/dataImportExport';
+
+export interface AnalyticsHubProps {
+  records: TypingRecord[];
+  onResetRecords?: () => void;
+  onImportRecords?: (imported: TypingRecord[]) => void;
+}
+
+export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
+  records,
+  onResetRecords,
+  onImportRecords
+}) => {
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Summary KPIs derived synchronously during render
+  const stats = useMemo(() => {
+    const count = records.length;
+    if (count === 0) {
+      return {
+        totalSessions: 0,
+        bestWpm: 0,
+        avgWpm: 0,
+        avgAcc: 0,
+        totalWords: 0,
+        totalMins: 0,
+        trendLabel: '0 wpm',
+        trendSubtitle: '0m practice time',
+        isPositive: true,
+        isNeutral: true
+      };
+    }
+
+    const bestWpm = Math.max(...records.map(r => r.netWpm));
+    const avgWpm = Math.round((records.reduce((acc, r) => acc + r.netWpm, 0) / count) * 10) / 10;
+    const avgAcc = Math.round((records.reduce((acc, r) => acc + r.accuracy, 0) / count) * 10) / 10;
+    const totalWords = records.reduce((acc, r) => acc + Math.floor(r.charactersTyped / 5), 0);
+    const totalSecs = records.reduce((acc, r) => acc + r.timeSeconds, 0);
+    const totalMins = Math.round((totalSecs / 60) * 10) / 10;
+
+    let trendLabel = 'Calibrating';
+    let trendSubtitle = `${count}/5 calibration tests`;
+    let isPositive = true;
+    let isNeutral = true;
+
+    if (count >= 5) {
+      const first3Avg = records.slice(0, 3).reduce((acc, r) => acc + r.netWpm, 0) / 3;
+      const last3Avg = records.slice(-3).reduce((acc, r) => acc + r.netWpm, 0) / 3;
+      const diff = Math.round((last3Avg - first3Avg) * 10) / 10;
+
+      if (Math.abs(diff) <= 2.5) {
+        trendLabel = `Steady (±${Math.abs(diff)} wpm)`;
+        trendSubtitle = `${totalMins}m practice time`;
+        isNeutral = true;
+      } else if (diff > 2.5) {
+        trendLabel = `+${diff} wpm`;
+        trendSubtitle = 'Pace accelerating';
+        isPositive = true;
+        isNeutral = false;
+      } else {
+        trendLabel = `${diff} wpm`;
+        trendSubtitle = 'Pace variance';
+        isPositive = false;
+        isNeutral = false;
+      }
+    }
+
+    return {
+      totalSessions: count,
+      bestWpm,
+      avgWpm,
+      avgAcc,
+      totalWords,
+      totalMins,
+      trendLabel,
+      trendSubtitle,
+      isPositive,
+      isNeutral
+    };
+  }, [records]);
+
+  const handleConfirmReset = () => {
+    if (onResetRecords) {
+      onResetRecords();
+    }
+    setShowConfirmReset(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const result = parseImportedJson(text);
+        if (onImportRecords && result.records.length > 0) {
+          onImportRecords(result.records);
+          setImportStatus(`Imported ${result.count} records!`);
+          setTimeout(() => setImportStatus(null), 3000);
+        }
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Invalid JSON file');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  return (
+    <div className="w-full max-w-4xl mx-auto space-y-4">
+      {/* Top Header with Import / Export & Reset Actions */}
+      <div className="p-3.5 rounded border border-ink-400/15 bg-surface flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-medium text-ink-100 font-sans">
+            Typing performance analytics
+          </div>
+          <div className="text-[11px] text-ink-400 font-sans">
+            Telemetry, error clusters, biomechanics, and trajectory
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Export JSON Backup */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => exportRecordsToJson(records)}
+            disabled={records.length === 0}
+            icon={<Download className="w-3.5 h-3.5" />}
+          >
+            Export JSON
+          </Button>
+
+          {/* Import JSON Backup / Monkeytype */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleFileUpload}
+            className="hidden"
+            aria-label="Import JSON records"
+          />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            icon={<Upload className="w-3.5 h-3.5" />}
+          >
+            Import JSON
+          </Button>
+
+          {importStatus ? (
+            <span className="text-xs font-mono text-correct flex items-center gap-1 animate-in fade-in">
+              <Check className="w-3 h-3" /> {importStatus}
+            </span>
+          ) : null}
+
+          {/* Reset Analytics */}
+          {onResetRecords ? (
+            <div>
+              {!showConfirmReset ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowConfirmReset(true)}
+                  disabled={records.length === 0}
+                  icon={<RotateCcw className="w-3.5 h-3.5" />}
+                >
+                  Reset
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2 animate-in fade-in duration-150">
+                  <span className="text-xs text-incorrect font-sans flex items-center gap-1">
+                    <AlertTriangle className="w-3.5 h-3.5" /> Clear all?
+                  </span>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleConfirmReset}
+                    className="bg-incorrect/20 text-incorrect border-incorrect hover:bg-incorrect/30"
+                  >
+                    Yes, reset
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowConfirmReset(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* 4 Summary KPI Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <MetricCard
+          title="Total sessions"
+          value={stats.totalSessions}
+          subtitle={`${stats.totalWords} words typed`}
+          icon={<BarChart2 className="w-4 h-4" aria-hidden="true" />}
+        />
+        <MetricCard
+          title="Personal best"
+          value={`${stats.bestWpm} wpm`}
+          subtitle="Peak velocity"
+          icon={<Award className="w-4 h-4 text-accent" aria-hidden="true" />}
+        />
+        <MetricCard
+          title="Average speed"
+          value={`${stats.avgWpm} wpm`}
+          subtitle={`${stats.avgAcc}% accuracy`}
+          icon={<Target className="w-4 h-4 text-correct" aria-hidden="true" />}
+        />
+        <MetricCard
+          title="Velocity trend"
+          value={stats.trendLabel}
+          subtitle={stats.trendSubtitle}
+          delta={{
+            value: stats.trendLabel,
+            isPositive: stats.isPositive,
+            isNeutral: stats.isNeutral
+          }}
+          icon={<TrendingUp className="w-4 h-4" aria-hidden="true" />}
+        />
+      </div>
+
+      {/* Visual Charts Grid: Trajectory & Mistake Matrix */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ProgressionChart records={records} />
+        <MistakeMatrix records={records} />
+      </div>
+
+      {/* Biomechanical Finger Diagnostics */}
+      <FingerDiagnostics records={records} />
+
+      {/* Daily Practice Heatmap */}
+      <ActivityHeatmap records={records} />
+
+      {/* Milestones & Achievements Grid */}
+      <AchievementsGrid records={records} />
+
+      {/* Session Records Table */}
+      <SessionHistoryTable records={records} />
+    </div>
+  );
+};
