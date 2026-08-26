@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 export interface WordSpanProps {
   targetWord: string;
@@ -8,7 +8,7 @@ export interface WordSpanProps {
   isGhost?: boolean;
   ghostCharOffset?: number; // 0-indexed char offset in this word for ghost
   isBlindMode?: boolean;
-  isBursting?: boolean;
+  streak?: number;
   hasSpaceError?: boolean;
 }
 
@@ -27,16 +27,28 @@ export const WordSpan: React.FC<WordSpanProps> = React.memo(({
   isGhost = false,
   ghostCharOffset = -1,
   isBlindMode = false,
-  isBursting = false,
+  streak = 0,
   hasSpaceError = false
 }) => {
-  const caretFlameClasses = isBursting
-    ? 'bg-accent shadow-[0_0_8px_rgba(216,90,48,0.95)] animate-pulse'
-    : 'bg-accent animate-caret';
+  const caretFlameClasses = useMemo(() => {
+    if (streak >= 100) {
+      return 'bg-accent shadow-[0_0_20px_rgba(var(--color-accent-rgb),1)] ring-1 ring-accent animate-pulse';
+    }
+    if (streak >= 50) {
+      return 'bg-accent shadow-[0_0_14px_rgba(var(--color-accent-rgb),0.85)] animate-pulse';
+    }
+    if (streak >= 30) {
+      return 'bg-accent shadow-[0_0_8px_rgba(var(--color-accent-rgb),0.65)] animate-pulse';
+    }
+    if (streak >= 15) {
+      return 'bg-accent shadow-[0_0_4px_rgba(var(--color-accent-rgb),0.45)]';
+    }
+    return 'bg-accent animate-caret';
+  }, [streak]);
 
   const renderActiveCaret = () => (
     <span
-      className={`absolute -left-[1px] top-0 bottom-0 w-[2px] rounded-none pointer-events-none ${caretFlameClasses}`}
+      className={`absolute -left-[1px] top-0 bottom-0 w-[2px] rounded-none pointer-events-none transition-shadow duration-200 ${caretFlameClasses}`}
       aria-hidden="true"
     />
   );

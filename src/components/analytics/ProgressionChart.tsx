@@ -137,10 +137,25 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
             </div>
           </div>
 
-          {/* Interactive Velocity Spark-Bars */}
+          {/* Interactive Velocity Spark-Bars: 14-Session Rolling Horizon */}
           <div className="relative pt-2 pb-1 space-y-2">
-            <div className="flex items-end justify-between gap-1.5 h-32 w-full px-1">
-              {recent.map((r, idx) => {
+            <div className="flex items-end justify-between gap-1 sm:gap-1.5 h-32 w-full px-1">
+              {Array.from({ length: 14 }).map((_, idx) => {
+                const r = recent[idx];
+                if (!r) {
+                  return (
+                    <div
+                      key={`empty_${idx}`}
+                      className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end select-none opacity-35"
+                    >
+                      <div className="w-full bg-ink-400/5 rounded-t-sm h-full flex items-end border-b border-dashed border-ink-400/20" />
+                      <span className="text-[8px] sm:text-[9px] font-mono text-ink-400/40">
+                        #{idx + 1}
+                      </span>
+                    </div>
+                  );
+                }
+
                 const heightPercent = Math.max(15, Math.round((r.netWpm / maxWpm) * 100));
                 const isHovered = hoverIndex === idx;
                 const isHighAcc = r.accuracy >= 95;
@@ -170,7 +185,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
                     </div>
 
                     {/* Test Label */}
-                    <span className={`text-[9px] font-mono transition-colors ${isHovered ? 'text-accent font-bold' : 'text-ink-400/70'}`}>
+                    <span className={`text-[8px] sm:text-[9px] font-mono transition-colors ${isHovered ? 'text-accent font-bold' : 'text-ink-400/70'}`}>
                       #{idx + 1}
                     </span>
                   </div>

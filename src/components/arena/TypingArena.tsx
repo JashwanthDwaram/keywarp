@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { RotateCcw, Sparkles, Minimize2, X, FileText, Check, Ghost, Skull, Flame, Swords } from 'lucide-react';
+import { RotateCcw, Sparkles, Minimize2, X, FileText, Check, Ghost, Skull, Flame, Swords, Zap } from 'lucide-react';
 import { TypingRecord } from '../../types';
 import { SPRINT_WORDS, getRandomPassage, getRandomQuote } from '../../data/passages';
 import { generateRandomPassage } from '../../utils/sentenceGenerator';
@@ -122,15 +122,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   customDrillText,
   onClearCustomDrill
 }) => {
-  const initialMode = useMemo(getSavedMode, []);
-  const initialDifficulty = useMemo(getSavedDifficulty, []);
-  const initialWordCount = useMemo(getSavedWordCount, []);
-  const initialTarget = useMemo(() => getInitialTargetText(initialMode, initialDifficulty, initialWordCount), [initialMode, initialDifficulty, initialWordCount]);
-
-  const [mode, setMode] = useState<ArenaMode>(initialMode);
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>(initialDifficulty);
+  const [mode, setMode] = useState<ArenaMode>(getSavedMode);
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>(getSavedDifficulty);
   const [sprintDuration, setSprintDuration] = useState<number>(getSavedSprintDuration);
-  const [wordCount, setWordCount] = useState<number>(initialWordCount);
+  const [wordCount, setWordCount] = useState<number>(getSavedWordCount);
   const [soundProfile, setSoundProfile] = useState<SoundProfile>(getSavedSoundProfile);
   const [zenMode, setZenMode] = useState<boolean>(false);
   const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
@@ -153,8 +148,14 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const [isCustomModalOpen, setIsCustomModalOpen] = useState<boolean>(false);
   const [customInputText, setCustomInputText] = useState<string>('');
 
-  const [targetText, setTargetText] = useState<string>(initialTarget.text);
-  const [quoteAuthor, setQuoteAuthor] = useState<string | null>(initialTarget.author);
+  // Initial text is generated synchronously on render 1 (never empty string)
+  const [targetText, setTargetText] = useState<string>(() => {
+    return getInitialTargetText(getSavedMode(), getSavedDifficulty(), getSavedWordCount()).text;
+  });
+  const [quoteAuthor, setQuoteAuthor] = useState<string | null>(() => {
+    return getInitialTargetText(getSavedMode(), getSavedDifficulty(), getSavedWordCount()).author;
+  });
+
   const [wordIndex, setWordIndex] = useState<number>(0);
   const [typedWords, setTypedWords] = useState<string[]>([]);
   const [currentInput, setCurrentInput] = useState<string>('');
@@ -175,7 +176,6 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const [smoothedNetWpm, setSmoothedNetWpm] = useState<number>(0);
   const [smoothedGrossWpm, setSmoothedGrossWpm] = useState<number>(0);
   const lastKeyTimeRef = useRef<number>(0);
-  const hasInitializedRef = useRef<boolean>(false);
 
   const [now, setNow] = useState<number>(Date.now());
   const [snapshots, setSnapshots] = useState<SecondSnapshot[]>([]);
@@ -192,23 +192,15 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     return targetText.trim().split(/\s+/).filter(Boolean);
   }, [targetText]);
 
-  // Global Auto-Focus: ensures typing always works immediately on any keystroke or tap
+  // Initial focus on mount
   useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === 'TEXTAREA' || (target.tagName === 'INPUT' && target !== inputRef.current))) {
-        return;
-      }
-      if (document.activeElement !== inputRef.current) {
-        inputRef.current?.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    // Initial auto-focus
     inputRef.current?.focus();
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
+
+  // Update sound engine profile
+  useEffect(() => {
+    soundEngine.setProfile(soundProfile);
+  }, [soundProfile]);
 
   // Notify parent of Zen focus mode immediately
   useEffect(() => {
@@ -272,19 +264,16 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     setTimeout(() => inputRef.current?.focus(), 20);
   }, [mode, difficulty, wordCount, sprintDuration, customDrillText]);
 
-  // Initial mount: check challenge URL
+  // Initial challenge check
   useEffect(() => {
-    if (!hasInitializedRef.current) {
-      hasInitializedRef.current = true;
-      const challenge = decodeChallengeUrl();
-      if (challenge) {
-        setActiveChallenge({ fromWpm: challenge.wpm, mode: challenge.mode });
-        setTargetText(challenge.text);
-        setQuoteAuthor(null);
-        setWordIndex(0);
-        setTypedWords([]);
-        setCurrentInput('');
-      }
+    const challenge = decodeChallengeUrl();
+    if (challenge) {
+      setActiveChallenge({ fromWpm: challenge.wpm, mode: challenge.mode });
+      setTargetText(challenge.text);
+      setQuoteAuthor(null);
+      setWordIndex(0);
+      setTypedWords([]);
+      setCurrentInput('');
     }
   }, []);
 
@@ -313,10 +302,17 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     }
   }, [customDrillText]);
 
-  // Live timer interval
+  // Live timer interval & cadence decay (if typing stops for >1.5s, streak fades out)
   useEffect(() => {
     if (!startTime || isFinished) return;
-    const interval = setInterval(() => setNow(Date.now()), 100);
+    const interval = setInterval(() => {
+      const currentNow = Date.now();
+      setNow(currentNow);
+
+      if (lastKeyTimeRef.current > 0 && currentNow - lastKeyTimeRef.current > 1500) {
+        setStreak(0);
+      }
+    }, 100);
     return () => clearInterval(interval);
   }, [startTime, isFinished]);
 
@@ -352,11 +348,12 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     const currentSec = Math.floor(elapsedSeconds);
     if (currentSec > lastSnapshotSec && currentSec >= 1) {
       setLastSnapshotSec(currentSec);
-      const rawNet = calculateNetWpm(correctKeystrokes, incorrectKeystrokes, currentSec / 60);
+      const rawNet = calculateNetWpm(correctKeystrokes, incorrectKeystrokes, currentSec);
+      const rawGross = calculateGrossWpm(totalKeystrokes, currentSec);
       const rawErrors = incorrectKeystrokes;
-      setSnapshots(prev => [...prev, { second: currentSec, wpm: rawNet, errors: rawErrors }]);
+      setSnapshots(prev => [...prev, { second: currentSec, wpm: rawNet, raw: rawGross, errors: rawErrors }]);
     }
-  }, [elapsedSeconds, lastSnapshotSec, startTime, isFinished, correctKeystrokes, incorrectKeystrokes]);
+  }, [elapsedSeconds, lastSnapshotSec, startTime, isFinished, correctKeystrokes, incorrectKeystrokes, totalKeystrokes]);
 
   // Calculate characters typed in completed words
   const completedCharacters = useMemo(() => {
@@ -402,10 +399,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
     const durationSec = Math.max(1, (end - (startTime || end)) / 1000);
     const grossWpm = calculateGrossWpm(totalKeystrokes, durationSec);
-    const netWpm = calculateNetWpm(correctKeystrokes, incorrectKeystrokes, durationSec / 60);
+    const netWpm = calculateNetWpm(correctKeystrokes, incorrectKeystrokes, durationSec);
     const accuracy = calculateAccuracy(correctKeystrokes, totalKeystrokes);
 
-    soundEngine.playCompletionChime();
+    soundEngine.playComplete();
 
     // Store previous run for ghost racer replay
     setPreviousRun({
@@ -448,7 +445,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   ]);
 
   // Repeat current passage helper
-  const repeatCurrentPassage = () => {
+  const repeatCurrentPassage = useCallback(() => {
     setWordIndex(0);
     setTypedWords([]);
     setCurrentInput('');
@@ -466,10 +463,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     setLastSnapshotSec(0);
     setSuddenDeathFailed(false);
     setTimeout(() => inputRef.current?.focus(), 20);
-  };
+  }, []);
 
   // Keystroke input processor
-  const handleCharInput = (char: string) => {
+  const handleCharInput = useCallback((char: string) => {
     if (isFinished) return;
 
     const activeWord = words[wordIndex] || '';
@@ -489,11 +486,17 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     const isCorrect = char === expectedChar;
 
     if (isCorrect) {
-      soundEngine.playKeyClick(char, false);
+      soundEngine.playKey(soundProfile, false, false);
       setCorrectKeystrokes(prev => prev + 1);
-      setStreak(prev => prev + 1);
+      setStreak(prev => {
+        const nextStreak = prev + 1;
+        if (nextStreak > 0 && nextStreak % 50 === 0) {
+          soundEngine.playStreakChime(Math.floor(nextStreak / 50));
+        }
+        return nextStreak;
+      });
     } else {
-      soundEngine.playKeyClick(char, true);
+      soundEngine.playKey(soundProfile, false, true);
       setIncorrectKeystrokes(prev => prev + 1);
       setStreak(0);
       setLastMistakeKey(char);
@@ -522,7 +525,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
     // Update stabilized smoothed live WPM
     const currentDurationSec = Math.max(0.1, (currentNow - currentStartTime) / 1000);
-    const rawNet = calculateNetWpm(correctKeystrokes + (isCorrect ? 1 : 0), incorrectKeystrokes + (!isCorrect ? 1 : 0), currentDurationSec / 60);
+    const rawNet = calculateNetWpm(correctKeystrokes + (isCorrect ? 1 : 0), incorrectKeystrokes + (!isCorrect ? 1 : 0), currentDurationSec);
     const rawGross = calculateGrossWpm(totalKeystrokes + 1, currentDurationSec);
 
     setSmoothedNetWpm(prev => calculateSmoothedWpm(prev, rawNet, currentDurationSec));
@@ -536,16 +539,29 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       setCurrentInput('');
       finishSession();
     }
-  };
+  }, [
+    isFinished,
+    words,
+    wordIndex,
+    currentInput,
+    startTime,
+    isSuddenDeath,
+    finishSession,
+    mode,
+    soundProfile,
+    correctKeystrokes,
+    incorrectKeystrokes,
+    totalKeystrokes
+  ]);
 
   // Spacebar word advance handler
-  const handleSpace = () => {
+  const handleSpace = useCallback(() => {
     if (isFinished || !currentInput) return;
 
     const activeWord = words[wordIndex] || '';
     const isWordCorrect = currentInput === activeWord;
 
-    soundEngine.playKeyClick(' ', !isWordCorrect);
+    soundEngine.playKey(soundProfile, true, !isWordCorrect);
 
     setTypedWords(prev => [...prev, currentInput]);
     setCurrentInput('');
@@ -560,81 +576,104 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     if (mode !== 'Time' && wordIndex >= words.length - 1) {
       finishSession();
     }
-  };
+  }, [isFinished, currentInput, words, wordIndex, soundProfile, mode, finishSession]);
 
-  // Keyboard input handler
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      loadNewText();
-      return;
-    }
-
-    if (e.key === 'Enter' && e.shiftKey) {
-      e.preventDefault();
-      repeatCurrentPassage();
-      return;
-    }
-
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      setZenMode(prev => !prev);
-      return;
-    }
-
+  // Handle Backspace: supports character backspace, Ctrl/Alt+Backspace word wipe, and jumping back to previous word
+  const handleBackspace = useCallback((isCtrl = false) => {
     if (isFinished) return;
 
-    if (e.key === 'Backspace') {
-      e.preventDefault();
-      if (e.ctrlKey || e.altKey) {
+    // Ctrl / Alt / Meta + Backspace: wipe current word buffer or clear previous word
+    if (isCtrl) {
+      if (currentInput.length > 0) {
         setCurrentInput('');
-      } else if (currentInput.length > 0) {
-        setCurrentInput(prev => prev.slice(0, -1));
+      } else if (wordIndex > 0 && typedWords.length > 0) {
+        setWordIndex(prev => prev - 1);
+        setCurrentInput('');
+        setTypedWords(prev => prev.slice(0, -1));
       }
       return;
     }
 
-    if (e.key === ' ') {
-      e.preventDefault();
-      handleSpace();
+    // Standard character backspace within current word
+    if (currentInput.length > 0) {
+      setCurrentInput(prev => prev.slice(0, -1));
       return;
     }
 
-    if (e.key.length === 1) {
-      e.preventDefault();
-      handleCharInput(e.key);
+    // Cross-word backspacing: jump back to previous word so user can fix mistakes
+    if (wordIndex > 0 && typedWords.length > 0) {
+      const prevTyped = typedWords[typedWords.length - 1];
+      setWordIndex(prev => prev - 1);
+      setCurrentInput(prevTyped);
+      setTypedWords(prev => prev.slice(0, -1));
     }
-  };
+  }, [isFinished, currentInput, wordIndex, typedWords]);
 
-  // Mobile / Touchscreen Input Handler: handles single keys, space, and autocomplete bursts
+  // Global window listener: guarantees 100% reliable keystroke capture across entire browser
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'TEXTAREA' || (target.tagName === 'INPUT' && target !== inputRef.current))) {
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        loadNewText();
+        return;
+      }
+
+      if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        repeatCurrentPassage();
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setZenMode(prev => !prev);
+        return;
+      }
+
+      if (isFinished) return;
+
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleBackspace(Boolean(e.ctrlKey || e.altKey || e.metaKey));
+        return;
+      }
+
+      if (e.key === ' ') {
+        e.preventDefault();
+        handleSpace();
+        return;
+      }
+
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        handleCharInput(e.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [loadNewText, repeatCurrentPassage, isFinished, handleBackspace, handleSpace, handleCharInput]);
+
+  // Mobile Touch Input Handler
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (!val) return;
 
-    if (val.endsWith(' ') || val.includes(' ')) {
-      const parts = val.split(' ');
-      parts.forEach((p, idx) => {
-        if (idx < parts.length - 1) {
-          for (let i = 0; i < p.length; i++) {
-            handleCharInput(p[i]);
-          }
-          handleSpace();
-        } else if (p.length > 0) {
-          for (let i = 0; i < p.length; i++) {
-            handleCharInput(p[i]);
-          }
-        }
-      });
+    if (val.endsWith(' ')) {
+      handleSpace();
     } else {
-      for (let i = 0; i < val.length; i++) {
-        handleCharInput(val[i]);
-      }
+      const char = val.slice(-1);
+      handleCharInput(char);
     }
     e.target.value = '';
   };
 
-  const handleCanvasClick = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
+  const handleCanvasClick = () => {
     inputRef.current?.focus();
   };
 
@@ -673,7 +712,6 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       ref={containerRef}
       className="w-full max-w-4xl mx-auto space-y-4 select-none transition-all duration-300 font-sans"
       onClick={handleCanvasClick}
-      onTouchStart={handleCanvasClick}
     >
       {/* Custom Text Import Modal */}
       {isCustomModalOpen ? (
@@ -791,7 +829,8 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             }}
             className="text-xs font-mono text-ink-100 hover:underline cursor-pointer shrink-0 flex items-center gap-1"
           >
-            <RotateCcw className="w-3 h-3" /> Retry (Tab)
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Retry (Tab)</span>
           </button>
         </div>
       ) : null}
@@ -879,22 +918,44 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             isZenActive ? 'p-8 sm:p-14 min-h-[280px]' : 'p-6 sm:p-10 min-h-[220px]'
           }`}
           onClick={handleCanvasClick}
-          onTouchStart={handleCanvasClick}
         >
-          {/* Floating Fire Streak Indicator (Always visible during Blind & Zen modes) */}
-          {streak >= 5 && (
-            <div className="absolute top-3 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface/90 border border-accent/40 shadow-lg text-xs font-mono text-accent animate-in fade-in zoom-in-95 z-20 pointer-events-none">
-              <Flame className="w-3.5 h-3.5 fill-accent animate-pulse" />
-              <span className="font-semibold">{streak} streak</span>
+          {/* Escalating Tiered Streak Indicator (Starts at 15 letters, decays on pause) */}
+          {streak >= 15 && (
+            <div
+              className={`absolute top-3 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono z-20 pointer-events-none transition-all duration-300 animate-in fade-in zoom-in-95 ${
+                streak >= 100
+                  ? 'bg-accent border border-accent text-accent-contrast shadow-[0_0_22px_rgba(var(--color-accent-rgb),0.9)] font-bold'
+                  : streak >= 50
+                  ? 'bg-surface/95 border border-accent text-ink-100 shadow-[0_0_16px_rgba(var(--color-accent-rgb),0.6)] ring-1 ring-accent/60 font-semibold'
+                  : streak >= 30
+                  ? 'bg-surface/95 border border-accent text-accent shadow-[0_0_10px_rgba(var(--color-accent-rgb),0.4)] font-semibold'
+                  : 'bg-surface/90 border border-accent/40 text-accent shadow-md'
+              }`}
+            >
+              {streak >= 100 ? (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 fill-current animate-spin" />
+                  <span>{streak} streak • GODSPEED</span>
+                </>
+              ) : streak >= 50 ? (
+                <>
+                  <Zap className="w-3.5 h-3.5 text-accent fill-accent animate-pulse" />
+                  <span>{streak} streak • hyperflow</span>
+                </>
+              ) : (
+                <>
+                  <Flame className={`w-3.5 h-3.5 fill-accent ${streak >= 30 ? 'animate-bounce' : 'animate-pulse'}`} />
+                  <span>{streak} streak{streak >= 30 ? ' • flow' : ''}</span>
+                </>
+              )}
             </div>
           )}
 
-          {/* Transparent Input Overlay (z-10 ensures direct tap/click delivery on mobile & desktop) */}
+          {/* Transparent Input Overlay with Elevated z-20 */}
           <input
             ref={inputRef}
             type="text"
-            className="absolute inset-0 opacity-0 cursor-text w-full h-full z-10"
-            onKeyDown={handleKeyDown}
+            className="absolute inset-0 opacity-0 cursor-text w-full h-full z-20"
             onChange={handleInputChange}
             autoCapitalize="none"
             autoCorrect="off"
@@ -905,7 +966,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             aria-label="Touch typing input arena"
           />
 
-          {/* Typing Text Block: Word-Buffered Engine */}
+          {/* Typing Text Block: Word-Buffered Engine with pointer-events-none */}
           <div className="pointer-events-none">
             <div
               className="font-mono text-lg sm:text-2xl leading-relaxed tracking-normal select-none flex flex-wrap items-baseline font-normal"
@@ -927,7 +988,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
                     isGhost={isGhostWord}
                     ghostCharOffset={ghostOffset}
                     isBlindMode={isBlindMode}
-                    isBursting={streak >= 15}
+                    streak={streak}
                   />
                 );
               })}
@@ -943,7 +1004,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           </div>
 
           {/* Subtle Bottom Restart Trigger / Sound / Shortcuts Bar */}
-          <div className="flex items-center justify-between pt-4 text-xs font-mono text-ink-400 select-none relative z-20">
+          <div className="flex items-center justify-between pt-4 text-xs font-mono text-ink-400 select-none relative z-30 pointer-events-auto">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -1003,15 +1064,36 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             charactersTyped: totalKeystrokes,
             timeSeconds: Math.round(elapsedSeconds * 10) / 10,
             grossWpm: calculateGrossWpm(totalKeystrokes, elapsedSeconds),
-            netWpm: calculateNetWpm(correctKeystrokes, incorrectKeystrokes, elapsedSeconds / 60),
+            netWpm: calculateNetWpm(correctKeystrokes, incorrectKeystrokes, elapsedSeconds),
             accuracy: calculateAccuracy(correctKeystrokes, totalKeystrokes),
             totalErrors: incorrectKeystrokes,
             mistypedKeys: Object.entries(mistypedKeysMap).map(([k, c]) => `${k}:${c}`).join(';') || 'None'
           }}
           snapshots={snapshots}
-          onRestart={loadNewText}
-          onRepeatPassage={repeatCurrentPassage}
+          targetText={targetText}
+          onRestart={repeatCurrentPassage}
+          onNextTest={() => loadNewText(mode, difficulty, wordCount)}
           onOpenCoach={onOpenCoach}
+          onPracticeMistakes={(mistakeText) => {
+            setPreviousRun(null);
+            setTargetText(mistakeText);
+            setQuoteAuthor(null);
+            setWordIndex(0);
+            setTypedWords([]);
+            setCurrentInput('');
+            setStartTime(null);
+            setEndTime(null);
+            setIsFinished(false);
+            setTotalKeystrokes(0);
+            setCorrectKeystrokes(0);
+            setIncorrectKeystrokes(0);
+            setStreak(0);
+            setMistypedKeysMap({});
+            setSmoothedNetWpm(0);
+            setSmoothedGrossWpm(0);
+            setSnapshots([]);
+            setTimeout(() => inputRef.current?.focus(), 50);
+          }}
         />
       )}
 

@@ -232,13 +232,13 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
         />
         <MetricCard
           title="Velocity trend"
-          value={stats.trendLabel}
+          value={stats.totalSessions < 5 ? `${stats.totalSessions}/5 tests` : stats.trendLabel}
           subtitle={stats.trendSubtitle}
-          delta={{
-            value: stats.trendLabel,
+          delta={stats.totalSessions >= 5 ? {
+            value: stats.isPositive ? 'Accelerating' : stats.isNeutral ? 'Steady' : 'Variance',
             isPositive: stats.isPositive,
             isNeutral: stats.isNeutral
-          }}
+          } : undefined}
           icon={<TrendingUp className="w-4 h-4" aria-hidden="true" />}
         />
       </div>

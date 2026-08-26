@@ -141,6 +141,7 @@ export const AppContent: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <span className="font-medium text-ink-100 font-mono">typepulse</span>
+            <span className="text-[10px] font-mono text-ink-400/60 px-1.5 py-0.5 rounded bg-surface border border-ink-400/15">v1.2.4</span>
             <span className="text-ink-400/40">•</span>
             <span className="flex items-center gap-1 text-ink-400/80 font-mono text-[11px]">
               <Command className="w-3 h-3 text-accent" /> tab to restart

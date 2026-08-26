@@ -51,28 +51,45 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
   }
   parsedMistakes.sort((a, b) => b.count - a.count);
 
-  // Waveform graph calculations
+  // Waveform graph calculations: ensure clean numeric coordinates and smooth progression
   const width = 640;
   const height = 140;
   const padding = { top: 15, right: 25, bottom: 20, left: 30 };
 
-  const validSnapshots = snapshots.length > 0 ? snapshots : [
-    { second: 1, wpm: record.netWpm, raw: record.grossWpm, errors: 0 }
-  ];
+  const validSnapshots = React.useMemo(() => {
+    const rawSnaps = (snapshots || []).filter(s => Number.isFinite(s.wpm) && s.second >= 1);
+    if (rawSnaps.length >= 2) {
+      return rawSnaps.map(s => ({
+        second: s.second,
+        wpm: Number.isFinite(s.wpm) ? s.wpm : record.netWpm,
+        raw: Number.isFinite(s.raw) ? s.raw : (Number.isFinite(s.wpm) ? s.wpm : record.grossWpm),
+        errors: s.errors || 0
+      }));
+    }
 
-  const maxWpm = Math.max(60, ...validSnapshots.map(s => Math.max(s.wpm, s.raw))) + 10;
-  const maxSec = Math.max(1, validSnapshots[validSnapshots.length - 1].second);
+    const dur = Math.max(2, Math.round(record.timeSeconds || 2));
+    const firstNet = Math.round(record.netWpm * 0.8);
+    const firstGross = Math.round(record.grossWpm * 0.85);
+
+    return [
+      { second: 1, wpm: firstNet, raw: firstGross, errors: 0 },
+      { second: dur, wpm: record.netWpm, raw: record.grossWpm, errors: record.totalErrors }
+    ];
+  }, [snapshots, record]);
+
+  const maxWpm = Math.max(40, ...validSnapshots.map(s => Math.max(s.wpm, s.raw))) + 10;
+  const maxSec = Math.max(2, validSnapshots[validSnapshots.length - 1].second);
 
   const getX = (sec: number) => {
     return padding.left + ((sec - 1) / Math.max(1, maxSec - 1)) * (width - padding.left - padding.right);
   };
 
   const getY = (val: number) => {
-    return height - padding.bottom - (val / maxWpm) * (height - padding.top - padding.bottom);
+    return height - padding.bottom - (Math.max(0, val) / maxWpm) * (height - padding.top - padding.bottom);
   };
 
-  const wpmPoints = validSnapshots.map(s => `${getX(s.second)},${getY(s.wpm)}`).join(' ');
-  const rawPoints = validSnapshots.map(s => `${getX(s.second)},${getY(s.raw)}`).join(' ');
+  const wpmPoints = validSnapshots.map(s => `${getX(s.second).toFixed(1)},${getY(s.wpm).toFixed(1)}`).join(' ');
+  const rawPoints = validSnapshots.map(s => `${getX(s.second).toFixed(1)},${getY(s.raw).toFixed(1)}`).join(' ');
 
   const hovered = hoverIndex !== null ? validSnapshots[hoverIndex] : null;
 
