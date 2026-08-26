@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { RotateCcw, Sparkles, Minimize2, X, FileText, Check, Ghost, Skull, Flame, Swords, Zap } from 'lucide-react';
+import { RotateCcw, Sparkles, Minimize2, X, FileText, Check, Ghost, Skull, Flame, Swords, Zap, Upload, Code2 } from 'lucide-react';
 import { TypingRecord } from '../../types';
 import { SPRINT_WORDS, getRandomPassage, getRandomQuote } from '../../data/passages';
 import { generateRandomPassage } from '../../utils/sentenceGenerator';
-import { soundEngine, SoundProfile } from '../../utils/soundEngine';
+import { soundEngine, SoundProfile, AmbientSoundscape } from '../../utils/soundEngine';
+import { CodeLanguage, WordFrequencyPack, getRandomCodeSnippet, getRandomVocabWords } from '../../data/codingPresets';
+import { parseCodeForTyping } from '../../utils/codeParser';
 import { calculateGrossWpm, calculateNetWpm, calculateAccuracy, calculateSmoothedWpm } from '../../utils/typingMath';
 import { decodeChallengeUrl, recordWeakWord, getWeakWordsDrill } from '../../utils/challengeUtils';
 import { ModeSelector, ArenaMode, DifficultyLevel } from './ModeSelector';
@@ -94,12 +96,17 @@ const getSavedSoundProfile = (): SoundProfile => {
   return 'Thock';
 };
 
-const getInitialTargetText = (initMode: ArenaMode, initDiff: DifficultyLevel, initWords: number): { text: string; author: string | null } => {
+const getInitialTargetText = (
+  initMode: ArenaMode,
+  initDiff: DifficultyLevel,
+  initWords: number,
+  lang: CodeLanguage = 'typescript',
+  pack: WordFrequencyPack = '1k'
+): { text: string; author: string | null } => {
   if (initMode === 'Words') {
-    const generated = Array.from({ length: initWords }, () =>
-      SPRINT_WORDS[Math.floor(Math.random() * SPRINT_WORDS.length)]
-    ).join(' ');
-    return { text: generated, author: null };
+    return { text: getRandomVocabWords(pack, initWords), author: null };
+  } else if (initMode === 'Code') {
+    return { text: getRandomCodeSnippet(lang), author: null };
   } else if (initMode === 'Time') {
     const stream = Array.from({ length: 120 }, () =>
       SPRINT_WORDS[Math.floor(Math.random() * SPRINT_WORDS.length)]
@@ -110,7 +117,7 @@ const getInitialTargetText = (initMode: ArenaMode, initDiff: DifficultyLevel, in
     return { text: q.text, author: q.author };
   }
   return {
-    text: getRandomPassage(initDiff === 'Easy' ? 'Easy' : initDiff === 'Hard' ? 'Hard' : initMode === 'Code' ? 'Code' : initMode === 'N-Grams' ? 'N-Grams' : 'Medium'),
+    text: getRandomPassage(initDiff === 'Easy' ? 'Easy' : initDiff === 'Hard' ? 'Hard' : 'Medium'),
     author: null
   };
 };
@@ -127,6 +134,9 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const [sprintDuration, setSprintDuration] = useState<number>(getSavedSprintDuration);
   const [wordCount, setWordCount] = useState<number>(getSavedWordCount);
   const [soundProfile, setSoundProfile] = useState<SoundProfile>(getSavedSoundProfile);
+  const [codeLanguage, setCodeLanguage] = useState<CodeLanguage>('typescript');
+  const [wordFrequencyPack, setWordFrequencyPack] = useState<WordFrequencyPack>('1k');
+  const [ambientSoundscape, setAmbientSoundscape] = useState<AmbientSoundscape>('Off');
   const [zenMode, setZenMode] = useState<boolean>(false);
   const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
   const [showGhost, setShowGhost] = useState<boolean>(true);
@@ -183,6 +193,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-zen active when typing is in progress or when manually toggled
   const isZenActive = (zenMode || Boolean(startTime && !isFinished));
@@ -210,7 +221,13 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   }, [isZenActive, onZenModeChange]);
 
   // Load new target text helper
-  const loadNewText = useCallback((selectedMode = mode, selectedDiff = difficulty, selectedWords = wordCount) => {
+  const loadNewText = useCallback((
+    selectedMode = mode,
+    selectedDiff = difficulty,
+    selectedWords = wordCount,
+    selectedLang = codeLanguage,
+    selectedPack = wordFrequencyPack
+  ) => {
     setPreviousRun(null);
     setSuddenDeathFailed(false);
 
@@ -218,10 +235,11 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       setTargetText(customDrillText);
       setQuoteAuthor(null);
     } else if (selectedMode === 'Words') {
-      const generated = Array.from({ length: selectedWords }, () =>
-        SPRINT_WORDS[Math.floor(Math.random() * SPRINT_WORDS.length)]
-      ).join(' ');
+      const generated = getRandomVocabWords(selectedPack, selectedWords);
       setTargetText(generated);
+      setQuoteAuthor(null);
+    } else if (selectedMode === 'Code') {
+      setTargetText(getRandomCodeSnippet(selectedLang));
       setQuoteAuthor(null);
     } else if (selectedMode === 'Time') {
       const poolSize = Math.max(120, Math.ceil(sprintDuration * 4.5));
@@ -242,7 +260,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       setTargetText(weakDrill || SPRINT_WORDS.slice(0, 20).join(' '));
       setQuoteAuthor(null);
     } else {
-      setTargetText(getRandomPassage(selectedDiff === 'Easy' ? 'Easy' : selectedDiff === 'Hard' ? 'Hard' : selectedMode === 'Code' ? 'Code' : selectedMode === 'N-Grams' ? 'N-Grams' : 'Medium'));
+      setTargetText(getRandomPassage(selectedDiff === 'Easy' ? 'Easy' : selectedDiff === 'Hard' ? 'Hard' : selectedMode === 'N-Grams' ? 'N-Grams' : 'Medium'));
       setQuoteAuthor(null);
     }
 
@@ -262,7 +280,60 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     setSnapshots([]);
     setLastSnapshotSec(0);
     setTimeout(() => inputRef.current?.focus(), 20);
-  }, [mode, difficulty, wordCount, sprintDuration, customDrillText]);
+  }, [mode, difficulty, wordCount, sprintDuration, codeLanguage, wordFrequencyPack, customDrillText]);
+
+  const handleCodeLanguageChange = useCallback((lang: CodeLanguage) => {
+    setCodeLanguage(lang);
+    if (mode === 'Code') {
+      setPreviousRun(null);
+      setTargetText(getRandomCodeSnippet(lang));
+      setQuoteAuthor(null);
+      setWordIndex(0);
+      setTypedWords([]);
+      setCurrentInput('');
+      setStartTime(null);
+      setEndTime(null);
+      setIsFinished(false);
+      setTotalKeystrokes(0);
+      setCorrectKeystrokes(0);
+      setIncorrectKeystrokes(0);
+      setStreak(0);
+      setMistypedKeysMap({});
+      setSmoothedNetWpm(0);
+      setSmoothedGrossWpm(0);
+      setSnapshots([]);
+      setTimeout(() => inputRef.current?.focus(), 20);
+    }
+  }, [mode]);
+
+  const handleWordFrequencyPackChange = useCallback((pack: WordFrequencyPack) => {
+    setWordFrequencyPack(pack);
+    if (mode === 'Words') {
+      setPreviousRun(null);
+      setTargetText(getRandomVocabWords(pack, wordCount));
+      setQuoteAuthor(null);
+      setWordIndex(0);
+      setTypedWords([]);
+      setCurrentInput('');
+      setStartTime(null);
+      setEndTime(null);
+      setIsFinished(false);
+      setTotalKeystrokes(0);
+      setCorrectKeystrokes(0);
+      setIncorrectKeystrokes(0);
+      setStreak(0);
+      setMistypedKeysMap({});
+      setSmoothedNetWpm(0);
+      setSmoothedGrossWpm(0);
+      setSnapshots([]);
+      setTimeout(() => inputRef.current?.focus(), 20);
+    }
+  }, [mode, wordCount]);
+
+  const handleAmbientSoundscapeChange = useCallback((soundscape: AmbientSoundscape) => {
+    setAmbientSoundscape(soundscape);
+    soundEngine.setAmbientSoundscape(soundscape);
+  }, []);
 
   // Initial challenge check
   useEffect(() => {
@@ -679,29 +750,29 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (customInputText.trim()) {
-      setPreviousRun(null);
-      setMode('Custom');
-      try { localStorage.setItem(STORAGE_KEYS.MODE, 'Custom'); } catch {}
-      setTargetText(customInputText.trim());
-      setQuoteAuthor(null);
-      setWordIndex(0);
-      setTypedWords([]);
-      setCurrentInput('');
-      setStartTime(null);
-      setEndTime(null);
-      setIsFinished(false);
-      setTotalKeystrokes(0);
-      setCorrectKeystrokes(0);
-      setIncorrectKeystrokes(0);
-      setStreak(0);
-      setMistypedKeysMap({});
-      setSmoothedNetWpm(0);
-      setSmoothedGrossWpm(0);
-      setSnapshots([]);
-      setIsCustomModalOpen(false);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (!customInputText.trim()) return;
+    const parsed = parseCodeForTyping(customInputText);
+    setPreviousRun(null);
+    setMode('Custom');
+    try { localStorage.setItem(STORAGE_KEYS.MODE, 'Custom'); } catch {}
+    setTargetText(parsed.cleanText);
+    setQuoteAuthor(null);
+    setWordIndex(0);
+    setTypedWords([]);
+    setCurrentInput('');
+    setStartTime(null);
+    setEndTime(null);
+    setIsFinished(false);
+    setTotalKeystrokes(0);
+    setCorrectKeystrokes(0);
+    setIncorrectKeystrokes(0);
+    setStreak(0);
+    setMistypedKeysMap({});
+    setSmoothedNetWpm(0);
+    setSmoothedGrossWpm(0);
+    setSnapshots([]);
+    setIsCustomModalOpen(false);
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const activeTargetWord = words[wordIndex] || '';
@@ -713,15 +784,15 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       className="w-full max-w-4xl mx-auto space-y-4 select-none transition-all duration-300 font-sans"
       onClick={handleCanvasClick}
     >
-      {/* Custom Text Import Modal */}
+      {/* Custom Text / Code File Import Modal */}
       {isCustomModalOpen ? (
         <div className="fixed inset-0 z-50 bg-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-lg border border-ink-400/20 bg-surface p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-lg rounded-lg border border-ink-400/20 bg-surface p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 font-sans">
             <div className="flex items-center justify-between border-b border-ink-400/10 pb-3">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-accent" />
+                <Code2 className="w-4 h-4 text-accent" />
                 <h3 className="text-sm font-medium text-ink-100 font-sans">
-                  Custom practice text
+                  Custom Code & Text Practice
                 </h3>
               </div>
               <button
@@ -735,33 +806,62 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
             <form onSubmit={handleCustomSubmit} className="space-y-3">
               <p className="text-xs text-ink-400 font-sans">
-                Paste any article, lecture notes, or code to practice typing your own custom material.
+                Paste code, markdown, or text—or drop a source code file (`.ts`, `.py`, `.rs`, `.sql`, etc.) to generate instant typing drills.
               </p>
               <textarea
                 value={customInputText}
                 onChange={(e) => setCustomInputText(e.target.value)}
-                placeholder="Paste custom passage text here..."
+                placeholder="Paste code or custom passage here..."
                 rows={5}
                 required
                 className="w-full rounded border border-ink-400/20 bg-bg p-3 text-xs font-mono text-ink-100 placeholder:text-ink-400/40 focus:outline-none focus:border-accent"
               />
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-ink-400/10">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".ts,.tsx,.js,.jsx,.py,.rs,.sql,.html,.css,.go,.json,.md,.txt"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (evt) => {
+                        const content = evt.target?.result as string;
+                        const parsed = parseCodeForTyping(content, file.name);
+                        setCustomInputText(parsed.cleanText);
+                      };
+                      reader.readAsText(file);
+                    }
+                  }}
+                />
+                <button
                   type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsCustomModalOpen(false)}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs font-mono text-ink-400 hover:text-accent flex items-center gap-1.5 cursor-pointer py-1 px-2 rounded hover:bg-bg/50 transition-colors"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  icon={<Check className="w-3.5 h-3.5" />}
-                >
-                  Start practice
-                </Button>
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Import code / text file</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsCustomModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    icon={<Check className="w-3.5 h-3.5" />}
+                  >
+                    Start drill
+                  </Button>
+                </div>
               </div>
             </form>
           </div>
@@ -842,7 +942,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           difficulty={difficulty}
           sprintDuration={sprintDuration}
           wordCount={wordCount}
+          codeLanguage={codeLanguage}
+          wordFrequencyPack={wordFrequencyPack}
           soundProfile={soundProfile}
+          ambientSoundscape={ambientSoundscape}
           zenMode={zenMode}
           showKeyboard={showKeyboard}
           showGhost={showGhost}
@@ -882,10 +985,13 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             try { localStorage.setItem(STORAGE_KEYS.WORD_COUNT, String(count)); } catch {}
             loadNewText('Words', difficulty, count);
           }}
+          onCodeLanguageChange={handleCodeLanguageChange}
+          onWordFrequencyPackChange={handleWordFrequencyPackChange}
           onSoundProfileChange={(sp) => {
             setSoundProfile(sp);
             try { localStorage.setItem(STORAGE_KEYS.SOUND_PROFILE, sp); } catch {}
           }}
+          onAmbientSoundscapeChange={handleAmbientSoundscapeChange}
           onToggleZen={() => setZenMode(prev => !prev)}
           onToggleKeyboard={() => setShowKeyboard(prev => !prev)}
           onToggleGhost={() => setShowGhost(prev => !prev)}

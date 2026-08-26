@@ -5,7 +5,7 @@ import { MetricCard } from '../ui/MetricCard';
 import { ProgressionChart } from './ProgressionChart';
 import { MistakeMatrix } from './MistakeMatrix';
 import { SessionHistoryTable } from './SessionHistoryTable';
-import { ActivityHeatmap } from './ActivityHeatmap';
+import { BiomechanicalKeyboardHeatmap } from './BiomechanicalKeyboardHeatmap';
 import { FingerDiagnostics } from './FingerDiagnostics';
 import { AchievementsGrid } from './AchievementsGrid';
 import { Button } from '../ui/Button';
@@ -252,8 +252,8 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
       {/* Biomechanical Finger Diagnostics */}
       <FingerDiagnostics records={records} />
 
-      {/* Daily Practice Heatmap */}
-      <ActivityHeatmap records={records} />
+      {/* Biomechanical Keyboard Heatmap & Daily Practice Streak */}
+      <BiomechanicalKeyboardHeatmap records={records} />
 
       {/* Milestones & Achievements Grid */}
       <AchievementsGrid records={records} />

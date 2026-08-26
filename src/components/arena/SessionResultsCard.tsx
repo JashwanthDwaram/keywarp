@@ -471,20 +471,32 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
               ) : null}
             </svg>
 
-            {/* Hover Tooltip */}
-            {hovered ? (
-              <div
-                className="absolute pointer-events-none px-2 py-0.5 rounded bg-surface border border-ink-400/20 text-[11px] font-mono text-ink-100 flex items-center gap-2 -translate-x-1/2 -translate-y-full"
-                style={{
-                  left: `${(getX(hovered.second) / width) * 100}%`,
-                  top: `${(getY(hovered.wpm) / height) * 100}%`
-                }}
-              >
-                <span className="text-accent font-medium">{hovered.wpm} wpm</span>
-                <span className="text-ink-400">{hovered.raw} raw</span>
-                <span className="text-ink-400">{hovered.second}s</span>
-              </div>
-            ) : null}
+            {/* Hover Tooltip: Clamped and Floating Cleanly Without Edge Collisions */}
+            {hovered ? (() => {
+              const pctX = (getX(hovered.second) / width) * 100;
+              const pctY = Math.max(18, Math.min(82, (getY(hovered.wpm) / height) * 100));
+              const alignClass = pctX < 22
+                ? 'translate-x-2 -translate-y-full'
+                : pctX > 78
+                ? '-translate-x-[calc(100%+8px)] -translate-y-full'
+                : '-translate-x-1/2 -translate-y-full -mt-2';
+
+              return (
+                <div
+                  className={`absolute pointer-events-none px-2.5 py-1 rounded-md bg-surface/95 border border-accent/40 text-[10px] sm:text-[11px] font-mono text-ink-100 flex items-center gap-1.5 shadow-xl backdrop-blur-md z-30 transition-all ${alignClass}`}
+                  style={{
+                    left: `${pctX}%`,
+                    top: `${pctY}%`
+                  }}
+                >
+                  <span className="text-accent font-semibold">{hovered.wpm} net</span>
+                  <span className="text-ink-400">•</span>
+                  <span className="text-ink-100">{hovered.raw} raw</span>
+                  <span className="text-ink-400">•</span>
+                  <span className="text-ink-400">{hovered.second}s</span>
+                </div>
+              );
+            })() : null}
           </div>
         </div>
       ) : null}
