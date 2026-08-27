@@ -577,12 +577,24 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
             {/* Hover Tooltip: Clamped and Floating Cleanly Without Edge Collisions */}
             {hovered ? (() => {
               const pctX = (getX(hovered.second) / width) * 100;
-              const pctY = Math.max(18, Math.min(82, (getY(hovered.wpm) / height) * 100));
-              const alignClass = pctX < 22
-                ? 'translate-x-2 -translate-y-full'
-                : pctX > 78
-                ? '-translate-x-[calc(100%+8px)] -translate-y-full'
-                : '-translate-x-1/2 -translate-y-full -mt-2';
+              const rawPctY = (getY(hovered.wpm) / height) * 100;
+              const isNearTop = rawPctY < 32;
+              const pctY = Math.max(10, Math.min(85, rawPctY));
+              
+              let alignClass = '';
+              if (isNearTop) {
+                alignClass = pctX < 22
+                  ? 'translate-x-2 translate-y-3'
+                  : pctX > 78
+                  ? '-translate-x-[calc(100%+8px)] translate-y-3'
+                  : '-translate-x-1/2 translate-y-3';
+              } else {
+                alignClass = pctX < 22
+                  ? 'translate-x-2 -translate-y-full -mt-2'
+                  : pctX > 78
+                  ? '-translate-x-[calc(100%+8px)] -translate-y-full -mt-2'
+                  : '-translate-x-1/2 -translate-y-full -mt-2';
+              }
 
               return (
                 <div

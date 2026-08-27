@@ -29,6 +29,7 @@ export const AppContent: React.FC = () => {
         localStorage.removeItem('typepulse_first_next_test_clicked');
         localStorage.removeItem('typepulse_1_3_0_test_completed');
         localStorage.removeItem('typepulse_1_3_0_walkthrough_completed');
+        localStorage.removeItem('typepulse_1_3_0_discovery_seen');
       }
     } catch {}
   }, []);
@@ -54,14 +55,11 @@ export const AppContent: React.FC = () => {
   }, [records]);
 
   const handleSessionComplete = (newRecord: TypingRecord) => {
-    setRecords(prev => {
-      const next = [...prev, newRecord];
-      const hasSeenDiscovery = localStorage.getItem('typepulse_1_3_0_discovery_seen');
-      if (!hasSeenDiscovery) {
-        setShowDiscoveryBanner(true);
-      }
-      return next;
-    });
+    setRecords(prev => [...prev, newRecord]);
+    const hasSeenDiscovery = localStorage.getItem('typepulse_1_3_0_discovery_seen');
+    if (!hasSeenDiscovery) {
+      setShowDiscoveryBanner(true);
+    }
   };
 
   const handleResetRecords = () => {
