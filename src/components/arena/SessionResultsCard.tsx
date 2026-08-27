@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, ArrowRight, Award, Zap, Target, Clock, AlertTriangle, Sparkles, BarChart2, Check, Share2, Swords, Compass } from 'lucide-react';
+import { RotateCcw, ArrowRight, Award, Zap, Target, Clock, AlertTriangle, Sparkles, BarChart2, Check, Share2, Swords, Compass, Skull } from 'lucide-react';
 import { TypingRecord } from '../../types';
 import { getPerformanceRank } from '../../utils/typingMath';
 import { generateChallengeUrl } from '../../utils/challengeUtils';
@@ -35,8 +35,15 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
-  const [challengeStatus, setChallengeStatus] = useState<string | null>(null);
-  const rank = getPerformanceRank(record.netWpm, record.accuracy);
+  const rank = record.isSuddenDeathFailed
+    ? {
+        grade: 'Novice' as const,
+        title: 'Terminated',
+        badgeColor: 'border-incorrect text-incorrect',
+        minWpm: 0,
+        description: 'Sudden Death terminated upon 1st typo. 100% precision required.'
+      }
+    : getPerformanceRank(record.netWpm, record.accuracy);
 
   // Parse mistyped keys
   const parsedMistakes: { key: string; count: number }[] = [];
@@ -81,11 +88,14 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
 
   // Check if this test is a new personal best net WPM
   const isPersonalBest = React.useMemo(() => {
+    if (record.isDisqualified || record.isSuddenDeathFailed || record.timeSeconds < 3 || record.charactersTyped < 15) {
+      return false;
+    }
     try {
       const stored = localStorage.getItem('typepulse_records');
       if (!stored) return false;
       const recs = JSON.parse(stored);
-      const otherRecs = recs.filter((r: any) => r.id !== record.id);
+      const otherRecs = recs.filter((r: any) => r.id !== record.id && !r.isDisqualified && !r.isSuddenDeathFailed && (r.timeSeconds >= 3 || r.charactersTyped >= 15));
       if (otherRecs.length === 0) return false;
       const maxPrev = Math.max(...otherRecs.map((r: any) => r.netWpm || 0));
       return record.netWpm > maxPrev;
@@ -100,7 +110,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
       const stored = localStorage.getItem('typepulse_records');
       if (!stored) return null;
       const recs = JSON.parse(stored);
-      const otherRecs = recs.filter((r: any) => r.id !== record.id);
+      const otherRecs = recs.filter((r: any) => r.id !== record.id && !r.isDisqualified && !r.isSuddenDeathFailed && (r.timeSeconds >= 3 || r.charactersTyped >= 15));
       if (otherRecs.length < 2) return null;
       const sum = otherRecs.reduce((acc: number, r: any) => acc + (r.netWpm || 0), 0);
       return Math.round(sum / otherRecs.length);
@@ -621,6 +631,11 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
               Practice mistakes
             </Button>
           ) : null}
+        </div>
+      ) : record.isSuddenDeathFailed ? (
+        <div className="p-3 rounded bg-incorrect/10 border border-incorrect/30 text-incorrect text-xs font-sans flex items-center gap-2">
+          <Skull className="w-3.5 h-3.5 text-incorrect shrink-0" />
+          <span>Sudden Death terminated upon 1st typo. 100% precision required.</span>
         </div>
       ) : (
         <div className="p-3 rounded bg-bg/50 border border-correct/20 text-correct text-xs font-sans flex items-center gap-2">

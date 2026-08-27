@@ -11,6 +11,8 @@ export interface TypingRecord {
   accuracy: number;
   totalErrors: number;
   mistypedKeys: string;
+  isDisqualified?: boolean;
+  isSuddenDeathFailed?: boolean;
 }
 
 export interface SummaryStats {

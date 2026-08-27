@@ -482,25 +482,39 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   }, [showGhost, previousRun, startTime, isFinished, elapsedSeconds, words]);
 
   // Finish session helper
-  const finishSession = useCallback(() => {
+  const finishSession = useCallback((overrides?: {
+    totalKeystrokes?: number;
+    correctKeystrokes?: number;
+    incorrectKeystrokes?: number;
+    mistypedMap?: Record<string, number>;
+    isSuddenDeathFailed?: boolean;
+  }) => {
     const end = Date.now();
     setEndTime(end);
     setIsFinished(true);
 
-    const durationSec = Math.max(1, (end - (startTime || end)) / 1000);
-    const grossWpm = calculateGrossWpm(totalKeystrokes, durationSec);
-    const netWpm = calculateNetWpm(correctKeystrokes, incorrectKeystrokes, durationSec);
-    const accuracy = calculateAccuracy(correctKeystrokes, totalKeystrokes);
+    const effectiveTotal = overrides?.totalKeystrokes !== undefined ? overrides.totalKeystrokes : totalKeystrokes;
+    const effectiveCorrect = overrides?.correctKeystrokes !== undefined ? overrides.correctKeystrokes : correctKeystrokes;
+    const effectiveIncorrect = overrides?.incorrectKeystrokes !== undefined ? overrides.incorrectKeystrokes : incorrectKeystrokes;
+    const effectiveMistypedMap = overrides?.mistypedMap || mistypedKeysMap;
+    const isFailedSD = overrides?.isSuddenDeathFailed || suddenDeathFailed;
+
+    const durationSec = Math.max(0.5, (end - (startTime || end)) / 1000);
+    const grossWpm = calculateGrossWpm(effectiveTotal, durationSec);
+    const netWpm = calculateNetWpm(effectiveCorrect, effectiveIncorrect, durationSec);
+    const accuracy = calculateAccuracy(effectiveCorrect, effectiveTotal);
 
     soundEngine.playComplete();
 
-    // Store previous run for ghost racer replay
-    setPreviousRun({
-      targetText,
-      netWpm
-    });
+    // Store previous run for ghost racer replay (only if not an aborted sub-second test)
+    if (!isFailedSD && durationSec >= 3) {
+      setPreviousRun({
+        targetText,
+        netWpm
+      });
+    }
 
-    const mistypedStr = Object.entries(mistypedKeysMap)
+    const mistypedStr = Object.entries(effectiveMistypedMap)
       .map(([k, count]) => `${k}:${count}`)
       .join(';');
 
@@ -510,13 +524,15 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       mode: mode === 'Time' ? `Time (${sprintDuration}s)` : mode === 'Words' ? `Words (${wordCount}w)` : mode,
       difficulty: mode === 'Passage' ? difficulty : 'Medium',
       passageLength: targetText.length,
-      charactersTyped: totalKeystrokes,
+      charactersTyped: effectiveTotal,
       timeSeconds: Math.round(durationSec * 10) / 10,
       grossWpm,
       netWpm,
       accuracy,
-      totalErrors: incorrectKeystrokes,
-      mistypedKeys: mistypedStr || 'None'
+      totalErrors: effectiveIncorrect,
+      mistypedKeys: mistypedStr || (isFailedSD ? 'Fatal mistake:1' : 'None'),
+      isDisqualified: isFailedSD || durationSec < 3 || effectiveTotal < 15,
+      isSuddenDeathFailed: isFailedSD
     };
 
     onSessionComplete(newRecord);
@@ -527,6 +543,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     incorrectKeystrokes,
     targetText,
     mistypedKeysMap,
+    suddenDeathFailed,
     mode,
     sprintDuration,
     wordCount,
@@ -587,7 +604,6 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       });
     } else {
       soundEngine.playKey(soundProfile, false, true);
-      setIncorrectKeystrokes(prev => prev + 1);
       setStreak(0);
       setLastMistakeKey(char);
 
@@ -599,10 +615,27 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       // Sudden death instant failure condition
       if (isSuddenDeath) {
         setSuddenDeathFailed(true);
-        finishSession();
+        const finalIncorrect = incorrectKeystrokes + 1;
+        const finalTotal = totalKeystrokes + 1;
+        const fatalKey = expectedChar || '[space]';
+        const finalMistypedMap = {
+          ...mistypedKeysMap,
+          [fatalKey]: (mistypedKeysMap[fatalKey] || 0) + 1
+        };
+        setMistypedKeysMap(finalMistypedMap);
+        setIncorrectKeystrokes(finalIncorrect);
+        setTotalKeystrokes(finalTotal);
+        finishSession({
+          totalKeystrokes: finalTotal,
+          correctKeystrokes: correctKeystrokes,
+          incorrectKeystrokes: finalIncorrect,
+          mistypedMap: finalMistypedMap,
+          isSuddenDeathFailed: true
+        });
         return;
       }
 
+      setIncorrectKeystrokes(prev => prev + 1);
       setMistypedKeysMap(prev => ({
         ...prev,
         [expectedChar || '[space]']: (prev[expectedChar || '[space]'] || 0) + 1
