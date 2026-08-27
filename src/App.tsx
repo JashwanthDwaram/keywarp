@@ -114,22 +114,22 @@ export const AppContent: React.FC = () => {
       {showDiscoveryBanner && !isTourOpen ? (
         <aside
           aria-label="First Test Discovery"
-          className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 z-50 sm:w-[480px] p-3 sm:p-4 rounded-xl bg-surface/98 border border-accent/60 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-200 font-sans flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 select-none ring-1 ring-accent/30 pointer-events-auto"
+          className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 z-50 sm:max-w-lg p-3 sm:p-4 rounded-xl bg-surface/98 border border-accent/60 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-200 font-sans flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 select-none ring-1 ring-accent/30 pointer-events-auto"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-accent/15 border border-accent/40 flex items-center justify-center text-accent shrink-0">
               <Compass className="w-4 h-4" />
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs sm:text-sm font-semibold text-ink-100 truncate sm:whitespace-nowrap">
+            <div className="min-w-0">
+              <div className="text-xs sm:text-sm font-semibold text-ink-100 whitespace-nowrap">
                 🎉 First Test Recorded!
               </div>
-              <div className="text-[11px] text-ink-400 truncate sm:whitespace-nowrap">
-                Explore your AI Coach diagnostics & Key Heatmap
+              <div className="text-[11px] text-ink-400 whitespace-nowrap">
+                Explore AI Coach diagnostics & heatmap
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-ink-400/10">
+          <div className="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-ink-400/10">
             <button
               type="button"
               onClick={() => {

@@ -82,6 +82,13 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
     }
   ];
 
+  // Always reset to the very first card (Step 1) whenever the tour is opened
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+    }
+  }, [isOpen]);
+
   // Update target element highlighting
   const updateSpotlight = useCallback(() => {
     if (!isOpen) return;
@@ -156,6 +163,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
     localStorage.setItem('typepulse_tour_completed', 'true');
     localStorage.setItem('typepulse_tour_version', '1.3.0');
     onTabChange('arena');
+    setCurrentStep(0);
     onClose();
   };
 

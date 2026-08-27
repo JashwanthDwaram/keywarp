@@ -15,6 +15,10 @@ export const QUOTES_COLLECTION: QuoteItem[] = [
     author: "Jashwanth Dwaram"
   },
   {
+    text: "Focus is a muscle. The more you train your keystrokes to follow thought without hesitation, the more boundless your craft becomes.",
+    author: "Jashwanth Dwaram"
+  },
+  {
     text: "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Don't settle.",
     author: "Steve Jobs"
   },
@@ -61,6 +65,198 @@ export const QUOTES_COLLECTION: QuoteItem[] = [
   {
     text: "That brain of mine is something more than merely mortal; as time will show.",
     author: "Ada Lovelace"
+  },
+  {
+    text: "Premature optimization is the root of all evil in programming.",
+    author: "Donald Knuth"
+  },
+  {
+    text: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
+    author: "Martin Fowler"
+  },
+  {
+    text: "The best way to predict the future is to invent it.",
+    author: "Alan Kay"
+  },
+  {
+    text: "Programs must be written for people to read, and only incidentally for machines to execute.",
+    author: "Harold Abelson"
+  },
+  {
+    text: "First, solve the problem. Then, write the code.",
+    author: "John Johnson"
+  },
+  {
+    text: "Make it work, make it right, make it fast.",
+    author: "Kent Beck"
+  },
+  {
+    text: "Measuring programming progress by lines of code is like measuring aircraft building progress by weight.",
+    author: "Bill Gates"
+  },
+  {
+    text: "There are only two hard things in Computer Science: cache invalidation and naming things.",
+    author: "Phil Karlton"
+  },
+  {
+    text: "Controlling complexity is the essence of computer programming.",
+    author: "Brian Kernighan"
+  },
+  {
+    text: "Before software can be reusable it first has to be usable.",
+    author: "Ralph Johnson"
+  },
+  {
+    text: "The function of good software is to make the complex appear to be simple.",
+    author: "Grady Booch"
+  },
+  {
+    text: "Simplicity is the ultimate sophistication.",
+    author: "Leonardo da Vinci"
+  },
+  {
+    text: "Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment.",
+    author: "Buddha"
+  },
+  {
+    text: "An unexamined life is not worth living.",
+    author: "Socrates"
+  },
+  {
+    text: "The secret of getting ahead is getting started. The secret of getting started is breaking your complex tasks into small manageable tasks.",
+    author: "Mark Twain"
+  },
+  {
+    text: "It does not matter how slowly you go as long as you do not stop.",
+    author: "Confucius"
+  },
+  {
+    text: "Everything should be made as simple as possible, but not simpler.",
+    author: "Albert Einstein"
+  },
+  {
+    text: "Somewhere, something incredible is waiting to be known.",
+    author: "Carl Sagan"
+  },
+  {
+    text: "The first principle is that you must not fool yourself, and you are the easiest person to fool.",
+    author: "Richard Feynman"
+  },
+  {
+    text: "Nothing in life is to be feared, it is only to be understood. Now is the time to understand more, so that we may fear less.",
+    author: "Marie Curie"
+  },
+  {
+    text: "If I have seen further it is by standing on the shoulders of Giants.",
+    author: "Isaac Newton"
+  },
+  {
+    text: "To know that we know what we know, and that we do not know what we do not know, that is true knowledge.",
+    author: "Nicolaus Copernicus"
+  },
+  {
+    text: "I have no special talents. I am only passionately curious.",
+    author: "Albert Einstein"
+  },
+  {
+    text: "We suffer more often in imagination than in reality.",
+    author: "Seneca"
+  },
+  {
+    text: "No man is free who is not master of himself.",
+    author: "Epictetus"
+  },
+  {
+    text: "Waste no more time arguing about what a good man should be. Be one.",
+    author: "Marcus Aurelius"
+  },
+  {
+    text: "He who has a why to live can bear almost any how.",
+    author: "Friedrich Nietzsche"
+  },
+  {
+    text: "Be yourself; everyone else is already taken.",
+    author: "Oscar Wilde"
+  },
+  {
+    text: "Do what you can, with what you have, where you are.",
+    author: "Theodore Roosevelt"
+  },
+  {
+    text: "It always seems impossible until it is done.",
+    author: "Nelson Mandela"
+  },
+  {
+    text: "The only limit to our realization of tomorrow will be our doubts of today.",
+    author: "Franklin D. Roosevelt"
+  },
+  {
+    text: "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+    author: "Winston Churchill"
+  },
+  {
+    text: "I fear not the man who has practiced 10,000 kicks once, but I fear the man who has practiced one kick 10,000 times.",
+    author: "Bruce Lee"
+  },
+  {
+    text: "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away.",
+    author: "Antoine de Saint-Exupéry"
+  },
+  {
+    text: "Knowing is not enough; we must apply. Willing is not enough; we must do.",
+    author: "Johann Wolfgang von Goethe"
+  },
+  {
+    text: "The man who moves a mountain begins by carrying away small stones.",
+    author: "Confucius"
+  },
+  {
+    text: "Courage is resistance to fear, mastery of fear, not absence of fear.",
+    author: "Mark Twain"
+  },
+  {
+    text: "You will never do anything in this world without courage. It is the greatest quality of the mind next to honor.",
+    author: "Aristotle"
+  },
+  {
+    text: "Life is really simple, but we insist on making it complicated.",
+    author: "Confucius"
+  },
+  {
+    text: "Do not go where the path may lead, go instead where there is no path and leave a trail.",
+    author: "Ralph Waldo Emerson"
+  },
+  {
+    text: "If you cannot do great things, do small things in a great way.",
+    author: "Napoleon Hill"
+  },
+  {
+    text: "The mind is not a vessel to be filled, but a fire to be kindled.",
+    author: "Plutarch"
+  },
+  {
+    text: "A journey of a thousand miles begins with a single step.",
+    author: "Lao Tzu"
+  },
+  {
+    text: "To be yourself in a world that is constantly trying to make you something else is the greatest accomplishment.",
+    author: "Ralph Waldo Emerson"
+  },
+  {
+    text: "In the end, it is not the years in your life that count. It is the life in your years.",
+    author: "Abraham Lincoln"
+  },
+  {
+    text: "Look up at the stars and not down at your feet. Try to make sense of what you see, and wonder about what makes the universe exist.",
+    author: "Stephen Hawking"
+  },
+  {
+    text: "For small creatures such as we the vastness is bearable only through love.",
+    author: "Carl Sagan"
+  },
+  {
+    text: "Nature uses only the longest threads to weave her patterns, so each small piece reveals the organization of the entire tapestry.",
+    author: "Richard Feynman"
   }
 ];
 

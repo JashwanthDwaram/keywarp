@@ -142,6 +142,10 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
             <div className="flex items-end justify-between gap-1 sm:gap-1.5 h-32 w-full px-1">
               {Array.from({ length: 14 }).map((_, idx) => {
                 const r = recent[idx];
+                const sessionNum = displayRecords.length > 14
+                  ? (displayRecords.length - recent.length + idx + 1)
+                  : (idx + 1);
+
                 if (!r) {
                   return (
                     <div
@@ -150,7 +154,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
                     >
                       <div className="w-full bg-ink-400/5 rounded-t-sm h-full flex items-end border-b border-dashed border-ink-400/20" />
                       <span className="text-[8px] sm:text-[9px] font-mono text-ink-400/40">
-                        #{idx + 1}
+                        #{sessionNum}
                       </span>
                     </div>
                   );
@@ -184,9 +188,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
                       />
                     </div>
 
-                    {/* Test Label */}
+                    {/* Dynamic Session Number */}
                     <span className={`text-[8px] sm:text-[9px] font-mono transition-colors ${isHovered ? 'text-accent font-bold' : 'text-ink-400/70'}`}>
-                      #{idx + 1}
+                      #{sessionNum}
                     </span>
                   </div>
                 );
@@ -198,6 +202,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
               {hoveredRecord ? (
                 <>
                   <div className="flex items-center gap-2 animate-in fade-in duration-100">
+                    <span className="text-ink-400 text-[10px]">
+                      #{displayRecords.length > 14 && hoverIndex !== null ? displayRecords.length - recent.length + hoverIndex + 1 : (hoverIndex !== null ? hoverIndex + 1 : '')}
+                    </span>
                     <span className="text-accent font-semibold">{hoveredRecord.netWpm} WPM</span>
                     <span className="text-ink-400">•</span>
                     <span className="text-correct">{hoveredRecord.accuracy}% ACC</span>
