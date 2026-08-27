@@ -113,26 +113,26 @@ export const SessionHistoryTable: React.FC<SessionHistoryTableProps> = ({ record
                   </td>
                   <td className="py-2 px-3">
                     <span className="px-1.5 py-0.2 rounded bg-surface border border-ink-400/20 text-ink-100 text-[10px]">
-                      {rec.mode.toLowerCase()}
+                      {(rec.mode || 'standard').toLowerCase()}
                     </span>
                   </td>
                   <td className="py-2 px-3 text-ink-400 font-sans">
-                    {rec.difficulty.toLowerCase()}
+                    {(rec.difficulty || 'medium').toLowerCase()}
                   </td>
                   <td className="py-2 px-3 text-right font-medium text-ink-100 tabular-nums">
-                    {rec.netWpm}
+                    {rec.netWpm ?? 0}
                   </td>
                   <td className="py-2 px-3 text-right text-ink-400 tabular-nums">
-                    {rec.grossWpm}
+                    {rec.grossWpm ?? 0}
                   </td>
                   <td className="py-2 px-3 text-right text-correct tabular-nums">
-                    {rec.accuracy}%
+                    {rec.accuracy ?? 100}%
                   </td>
                   <td className="py-2 px-3 text-right text-incorrect tabular-nums">
-                    {rec.totalErrors}
+                    {rec.totalErrors ?? 0}
                   </td>
                   <td className="py-2 px-3 text-right text-ink-400 tabular-nums">
-                    {rec.timeSeconds.toFixed(1)}s
+                    {(rec.timeSeconds ?? 0).toFixed(1)}s
                   </td>
                 </tr>
               ))}

@@ -183,6 +183,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const [lastPressedKey, setLastPressedKey] = useState<string>('');
   const [lastMistakeKey, setLastMistakeKey] = useState<string>('');
   const [mistypedKeysMap, setMistypedKeysMap] = useState<Record<string, number>>({});
+  const [lastCompletedRecord, setLastCompletedRecord] = useState<TypingRecord | null>(null);
 
   // Stabilized smoothed live metrics
   const [smoothedNetWpm, setSmoothedNetWpm] = useState<number>(0);
@@ -345,6 +346,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       setSmoothedNetWpm(0);
       setSmoothedGrossWpm(0);
       setSnapshots([]);
+      setLastCompletedRecord(null);
       setTimeout(() => inputRef.current?.focus(), 20);
     }
   }, [mode, wordCount]);
@@ -535,6 +537,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       isSuddenDeathFailed: isFailedSD
     };
 
+    setLastCompletedRecord(newRecord);
     onSessionComplete(newRecord);
   }, [
     startTime,
@@ -569,6 +572,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     setSnapshots([]);
     setLastSnapshotSec(0);
     setSuddenDeathFailed(false);
+    setLastCompletedRecord(null);
     setTimeout(() => inputRef.current?.focus(), 20);
   }, []);
 
@@ -1241,7 +1245,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
         </div>
       ) : (
         <SessionResultsCard
-          record={{
+          record={lastCompletedRecord || {
             id: `${Date.now()}`,
             timestamp: new Date().toISOString(),
             mode: mode === 'Time' ? `Time (${sprintDuration}s)` : mode === 'Words' ? `Words (${wordCount}w)` : mode,
@@ -1279,6 +1283,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             setSmoothedNetWpm(0);
             setSmoothedGrossWpm(0);
             setSnapshots([]);
+            setLastCompletedRecord(null);
             setTimeout(() => inputRef.current?.focus(), 50);
           }}
         />

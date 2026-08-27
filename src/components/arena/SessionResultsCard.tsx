@@ -316,7 +316,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-ink-400/10">
         <div>
           <div className="text-xs text-accent font-mono mb-0.5">
-            Session completed • {record.mode.toLowerCase()} ({record.difficulty.toLowerCase()})
+            Session completed • {(record.mode || 'standard').toLowerCase()} ({(record.difficulty || 'medium').toLowerCase()})
           </div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg sm:text-xl font-medium text-ink-100 font-sans">
