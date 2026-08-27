@@ -61,7 +61,10 @@ export const VOCABULARY_PACKS: Record<WordFrequencyPack, string[]> = {
     'then', 'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also', 'back', 'after', 'use', 'two',
     'how', 'our', 'work', 'first', 'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give',
     'day', 'most', 'us', 'great', 'between', 'need', 'large', 'under', 'might', 'still', 'found', 'thought',
-    'point', 'world', 'place', 'hand', 'life', 'tell', 'sentence', 'should', 'water', 'system', 'build'
+    'point', 'world', 'place', 'hand', 'life', 'tell', 'sentence', 'should', 'water', 'system', 'build',
+    'number', 'sound', 'line', 'side', 'been', 'now', 'find', 'head', 'stand', 'own', 'page', 'should',
+    'country', 'found', 'answer', 'school', 'grow', 'study', 'still', 'learn', 'plant', 'cover', 'food',
+    'sun', 'four', 'between', 'state', 'keep', 'eye', 'never', 'last', 'let', 'thought', 'city', 'tree'
   ],
   '5k': [
     'algorithm', 'cadence', 'biomechanics', 'velocity', 'equilibrium', 'synchronize', 'precision',
@@ -69,20 +72,28 @@ export const VOCABULARY_PACKS: Record<WordFrequencyPack, string[]> = {
     'coordinate', 'neuromuscular', 'resilience', 'transition', 'cognitive', 'architecture', 'bandwidth',
     'calibration', 'deterministic', 'entropy', 'frequency', 'granularity', 'hierarchy', 'iteration',
     'jurisdiction', 'kinetics', 'leverage', 'magnitude', 'navigation', 'oscillation', 'paradigms',
-    'quantum', 'rhythm', 'synthesize', 'tactical', 'unison', 'vibration', 'wavelength', 'zenith'
+    'quantum', 'rhythm', 'synthesize', 'tactical', 'unison', 'vibration', 'wavelength', 'zenith',
+    'asymptotic', 'benchmark', 'concurrency', 'divergence', 'exponential', 'fluctuation', 'generative',
+    'hyperbolic', 'immutable', 'juxtapose', 'kinesthetic', 'logarithmic', 'metronome', 'nonvolatile',
+    'orthogonal', 'phenomenon', 'quadratic', 'refactoring', 'streamlined', 'topological', 'ubiquity'
   ],
   '10k': [
     'anachronistic', 'epistemology', 'quintessential', 'juxtaposition', 'labyrinthine', 'magnanimous',
     'perspicacity', 'recalcitrant', 'ubiquitous', 'vicarious', 'pulchritude', 'zeitgeist', 'surreptitious',
     'idiosyncrasy', 'sesquipedalian', 'inconsequential', 'circumspect', 'deleterious', 'ephemeral',
     'fastidious', 'grandiloquent', 'hegemony', 'impecunious', 'misanthrope', 'nefarious', 'obfuscate',
-    'perfunctory', 'quixotic', 'reprobate', 'sycophant', 'trepidation', 'unconscionable', 'verisimilitude'
+    'perfunctory', 'quixotic', 'reprobate', 'sycophant', 'trepidation', 'unconscionable', 'verisimilitude',
+    'pusillanimous', 'perspicuous', 'lugubrious', 'mellifluous', 'parsimonious', 'recondite', 'salubrious',
+    'supercilious', 'tintinnabulation', 'truculent', 'turgid', 'vacillate', 'venerate', 'vociferous'
   ],
   'tech': [
     'microservices', 'kubernetes', 'distributed', 'concurrency', 'idempotent', 'asynchronous',
     'polymorphism', 'serialization', 'telemetry', 'cryptography', 'immutability', 'eventually',
     'consistency', 'observability', 'throughput', 'backpressure', 'sharding', 'partition',
-    'vectorization', 'quantization', 'middleware', 'syntactic', 'composition', 'memoization'
+    'vectorization', 'quantization', 'middleware', 'syntactic', 'composition', 'memoization',
+    'containerization', 'orchestration', 'replication', 'decoupling', 'declarative', 'imperative',
+    'deterministic', 'interceptor', 'multitenancy', 'normalization', 'benchmarking', 'transpilation',
+    'microfrontend', 'websockets', 'hypervisor', 'virtualization', 'idempotency', 'subgraph'
   ]
 };
 

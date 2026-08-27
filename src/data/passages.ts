@@ -257,6 +257,150 @@ export const QUOTES_COLLECTION: QuoteItem[] = [
   {
     text: "Nature uses only the longest threads to weave her patterns, so each small piece reveals the organization of the entire tapestry.",
     author: "Richard Feynman"
+  },
+  {
+    text: "The best thing about a boolean is even if you are wrong, you are only off by a bit.",
+    author: "Anonymous"
+  },
+  {
+    text: "Simplicity is about subtracting the obvious and adding the meaningful.",
+    author: "John Maeda"
+  },
+  {
+    text: "Code is like humor. When you have to explain it, it's bad.",
+    author: "Cory House"
+  },
+  {
+    text: "Fix the cause, not the symptom.",
+    author: "Steve Maguire"
+  },
+  {
+    text: "Optimism is an occupational hazard of programming: feedback is the treatment.",
+    author: "Kent Beck"
+  },
+  {
+    text: "Simplicity is the soul of efficiency.",
+    author: "Austin Freeman"
+  },
+  {
+    text: "The function of wisdom is to discriminate between good and evil.",
+    author: "Cicero"
+  },
+  {
+    text: "Wisdom begins in wonder.",
+    author: "Socrates"
+  },
+  {
+    text: "Patience is bitter, but its fruit is sweet.",
+    author: "Jean-Jacques Rousseau"
+  },
+  {
+    text: "Happiness depends upon ourselves.",
+    author: "Aristotle"
+  },
+  {
+    text: "Turn your wounds into wisdom.",
+    author: "Oprah Winfrey"
+  },
+  {
+    text: "What we achieve inwardly will change outer reality.",
+    author: "Plutarch"
+  },
+  {
+    text: "Live as if you were to die tomorrow. Learn as if you were to live forever.",
+    author: "Mahatma Gandhi"
+  },
+  {
+    text: "If you want to shine like the sun, first burn like the sun.",
+    author: "A.P.J. Abdul Kalam"
+  },
+  {
+    text: "A person who never made a mistake never tried anything new.",
+    author: "Albert Einstein"
+  },
+  {
+    text: "Don't watch the clock; do what it does. Keep going.",
+    author: "Sam Levenson"
+  },
+  {
+    text: "Quality is not an act, it is a habit.",
+    author: "Aristotle"
+  },
+  {
+    text: "The mind is everything. What you think you become.",
+    author: "Buddha"
+  },
+  {
+    text: "Action is the foundational key to all success.",
+    author: "Pablo Picasso"
+  },
+  {
+    text: "Your time is limited, so don't waste it living someone else's life.",
+    author: "Steve Jobs"
+  },
+  {
+    text: "Stay hungry. Stay foolish.",
+    author: "Stewart Brand"
+  },
+  {
+    text: "To invent, you have to experiment, and if you know in advance that it's going to work, it's not an experiment.",
+    author: "Jeff Bezos"
+  },
+  {
+    text: "The art of programming is the art of organizing complexity.",
+    author: "Edsger W. Dijkstra"
+  },
+  {
+    text: "Any sufficiently advanced technology is indistinguishable from magic.",
+    author: "Arthur C. Clarke"
+  },
+  {
+    text: "The purpose of computing is insight, not numbers.",
+    author: "Richard Hamming"
+  },
+  {
+    text: "Computer science is no more about computers than astronomy is about telescopes.",
+    author: "Edsger W. Dijkstra"
+  },
+  {
+    text: "There is nothing permanent except change.",
+    author: "Heraclitus"
+  },
+  {
+    text: "He who conquers himself is the mightiest warrior.",
+    author: "Confucius"
+  },
+  {
+    text: "Difficulties strengthen the mind, as labor does the body.",
+    author: "Seneca"
+  },
+  {
+    text: "Everything we hear is an opinion, not a fact. Everything we see is a perspective, not the truth.",
+    author: "Marcus Aurelius"
+  },
+  {
+    text: "The journey of a thousand miles begins beneath one's feet.",
+    author: "Lao Tzu"
+  },
+  {
+    text: "In three words I can sum up everything I've learned about life: it goes on.",
+    author: "Robert Frost"
+  },
+  {
+    text: "Do not let what you cannot do interfere with what you can do.",
+    author: "John Wooden"
+  },
+  {
+    text: "The only true wisdom is in knowing you know nothing.",
+    author: "Socrates"
+  },
+  {
+    text: "The expert in anything was once a beginner.",
+    author: "Helen Hayes"
+  },
+  {
+    text: "Flow state is reached when your fingers type at the rhythm of pure consciousness.",
+    author: "Jashwanth Dwaram"
   }
 ];
 
@@ -277,7 +421,21 @@ export const WEB_PASSAGES = {
     "Laughter echoed across the playground as the games continued until dusk.",
     "He kept a small notebook in his pocket to write down new ideas.",
     "The sweet fragrance of spring flowers filled the open meadow.",
-    "Summer breezes carried the quiet whisper of waves crashing on the shore."
+    "Summer breezes carried the quiet whisper of waves crashing on the shore.",
+    "The cat curled up comfortably on the soft rug by the sunny window.",
+    "A warm smile can make a great difference in someone's day.",
+    "They packed a basket of fruit and sandwiches for a sunny picnic in the garden.",
+    "The morning mist slowly cleared as the sun climbed higher in the blue sky.",
+    "Crisp autumn leaves rustled gently beneath their feet as they walked down the trail.",
+    "The old clock on the wooden wall ticked steadily through the quiet evening.",
+    "She planted tiny seeds in the garden and watered them carefully every day.",
+    "A flock of wild geese flew south in a neat V-shape across the sunset.",
+    "The library was warm and inviting on a cold, snowy December afternoon.",
+    "Children built sandcastles along the edge of the shallow ocean tide.",
+    "He brewed fresh coffee as the first light of dawn filled the kitchen.",
+    "The gentle river flowed smoothly around smooth stones and fallen branches.",
+    "Bright yellow butterflies fluttered happily around the blooming roses.",
+    "A soothing melody played softly on the radio in the background."
   ],
   Medium: [
     "Software engineering is the systematic approach to the development, operation, and maintenance of software systems with high reliability.",
@@ -292,7 +450,18 @@ export const WEB_PASSAGES = {
     "Renewable energy technologies like solar photovoltaics and offshore wind turbines are essential for a sustainable future.",
     "Effective communication requires active listening, empathy, and the ability to articulate complex thoughts with clarity.",
     "Space exploration expands our scientific horizons and challenges human ingenuity to solve unprecedented engineering hurdles.",
-    "Consistency over long periods produces compounding returns in skill development, knowledge acquisition, and physical fitness."
+    "Consistency over long periods produces compounding returns in skill development, knowledge acquisition, and physical fitness.",
+    "Building scalable web applications requires thoughtful caching strategies, database indexing, and asynchronous job processing.",
+    "The transition from monolithic architectures to microservices introduces new challenges in distributed tracing and telemetry.",
+    "Deep work is the ability to focus without distraction on a cognitively demanding task, producing high-value output.",
+    "Cryptographic algorithms protect digital privacy by ensuring that sensitive information remains tamper-proof across networks.",
+    "Biomechanical ergonomics in typing emphasizes neutral wrist alignment, relaxed shoulders, and fluid finger movements.",
+    "Continuous integration pipelines automatically build, test, and validate software changes to ensure zero regression in production.",
+    "Iterative design cycles rely on rapid prototyping, user feedback, and measurable performance analytics to refine interfaces.",
+    "Memory management in modern runtimes combines garbage collection with static ownership models to prevent memory leaks.",
+    "Cognitive endurance increases when tasks are broken down into focused sprints separated by brief recovery intervals.",
+    "Modern browsers employ multi-process architectures to isolate tabs, improving stability and security across domains.",
+    "High-velocity typing requires muscle memory automation so the conscious brain can focus purely on sentence formulation."
   ],
   Hard: [
     "In asynchronous programming (e.g., Python asyncio or JavaScript Promises), non-blocking I/O operations achieve concurrency without multi-threading overhead.",
@@ -303,13 +472,21 @@ export const WEB_PASSAGES = {
     "Epistemological inquiries investigate the nature, origin, and scope of human knowledge, distinguishing justified belief from mere opinion.",
     "Distributed consensus protocols, such as Paxos and Raft, ensure state-machine replication across fault-tolerant nodes in decentralized networks.",
     "Neuroplasticity enables the central nervous system to dynamically reorganize its neural pathways in response to novel cognitive stimuli and physical trauma.",
-    "Zero-knowledge succinct non-interactive arguments of knowledge (zk-SNARKs) allow one party to prove ownership of a statement without disclosing the underlying payload."
+    "Zero-knowledge succinct non-interactive arguments of knowledge (zk-SNARKs) allow one party to prove ownership of a statement without disclosing the underlying payload.",
+    "Byzantine fault tolerance guarantees system reliability in adversarial environments where individual nodes may fail arbitrarily or transmit conflicting data.",
+    "Vectorized SIMD (Single Instruction, Multiple Data) processor registers accelerate matrix transformations and neural network inference by orders of magnitude.",
+    "Functional purity enforces referential transparency, eliminating hidden state mutations and simplifying deterministic parallel execution.",
+    "Garbage collection algorithms, such as generational mark-and-sweep or reference counting with cycle detection, balance pause-times with throughput.",
+    "Formal verification utilizes mathematical proofs to guarantee that mission-critical aerospace and financial software complies with specifications."
   ],
   Code: [
     "const calculateWpm = (chars: number, seconds: number): number => {\n  if (seconds <= 0) return 0;\n  return Math.round(((chars / 5) / (seconds / 60)) * 10) / 10;\n};",
     "export function useTypingEngine(target: string) {\n  const [typed, setTyped] = useState('');\n  const [startTime, setStartTime] = useState(null);\n  return { typed, startTime };\n}",
     "def bubble_sort(arr: list[int]) -> list[int]:\n  n = len(arr)\n  for i in range(n):\n    for j in range(0, n - i - 1):\n      if arr[j] > arr[j + 1]:\n        arr[j], arr[j + 1] = arr[j + 1], arr[j]\n  return arr",
-    "async function fetchTelemetry(endpoint: string): Promise<Response> {\n  try {\n    return await fetch(endpoint);\n  } catch (err) {\n    throw new Error('Telemetry network failure');\n  }\n}"
+    "async function fetchTelemetry(endpoint: string): Promise<Response> {\n  try {\n    return await fetch(endpoint);\n  } catch (err) {\n    throw new Error('Telemetry network failure');\n  }\n}",
+    "type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };",
+    "pub fn binary_search<T: Ord>(arr: &[T], target: &T) -> Option<usize> {\n    arr.binary_search(target).ok()\n}",
+    "const debounce = <F extends (...args: any[]) => any>(fn: F, ms: number) => {\n  let t: any;\n  return (...args: Parameters<F>) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };\n};"
   ],
   Quotes: QUOTES_COLLECTION.map(q => q.text),
   'N-Grams': [
@@ -323,7 +500,7 @@ export const WEB_PASSAGES = {
   ]
 };
 
-// 300+ Common Typing Words for Sprint Mode
+// 400+ Common Typing Words for Sprint Mode
 export const SPRINT_WORDS = [
   "the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it", "for", "not", "on", "with", "he", "as", "you",
   "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", "one",
@@ -338,7 +515,10 @@ export const SPRINT_WORDS = [
   "want", "show", "also", "around", "farm", "three", "small", "set", "put", "end", "does", "another", "well", "large",
   "must", "big", "even", "such", "because", "turn", "here", "why", "ask", "went", "men", "read", "need", "land", "different",
   "home", "us", "move", "try", "kind", "hand", "picture", "again", "change", "off", "play", "spell", "air", "away", "animal",
-  "house", "point", "page", "letter", "mother", "answer", "found", "study", "still", "learn", "should", "world"
+  "house", "point", "page", "letter", "mother", "answer", "found", "study", "still", "learn", "should", "world",
+  "stream", "horizon", "velocity", "cadence", "focus", "rhythm", "signal", "pulse", "vector", "matrix", "beacon", "circuit",
+  "quantum", "neural", "biomechanics", "friction", "latency", "keystroke", "kinetic", "equilibrium", "frequency", "buffer",
+  "system", "engine", "precision", "mastery", "flow", "dynamo", "synthesizer", "spectrum", "terminal", "algorithm"
 ];
 
 // Helper to get random quote with author

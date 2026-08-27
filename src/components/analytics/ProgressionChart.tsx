@@ -146,15 +146,21 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
                   ? (displayRecords.length - recent.length + idx + 1)
                   : (idx + 1);
 
+                const formatSessionNum = (num: number): string => {
+                  if (num >= 10000) return `${Math.floor(num / 1000)}k`;
+                  if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+                  return `#${num}`;
+                };
+
                 if (!r) {
                   return (
                     <div
                       key={`empty_${idx}`}
-                      className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end select-none opacity-35"
+                      className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end select-none opacity-35 min-w-0"
                     >
                       <div className="w-full bg-ink-400/5 rounded-t-sm h-full flex items-end border-b border-dashed border-ink-400/20" />
-                      <span className="text-[8px] sm:text-[9px] font-mono text-ink-400/40">
-                        #{sessionNum}
+                      <span className="text-[7px] sm:text-[8.5px] font-mono tracking-tighter text-ink-400/40 truncate w-full text-center select-none">
+                        {formatSessionNum(sessionNum)}
                       </span>
                     </div>
                   );
@@ -168,7 +174,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
                 return (
                   <div
                     key={r.id || idx}
-                    className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer"
+                    className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer min-w-0"
                     onMouseEnter={() => setHoverIndex(idx)}
                     onMouseLeave={() => setHoverIndex(null)}
                   >
@@ -188,9 +194,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
                       />
                     </div>
 
-                    {/* Dynamic Session Number */}
-                    <span className={`text-[8px] sm:text-[9px] font-mono transition-colors ${isHovered ? 'text-accent font-bold' : 'text-ink-400/70'}`}>
-                      #{sessionNum}
+                    {/* Dynamic Compact Session Number */}
+                    <span className={`text-[7px] sm:text-[8.5px] font-mono tracking-tighter truncate w-full text-center select-none transition-colors ${isHovered ? 'text-accent font-bold' : 'text-ink-400/70'}`}>
+                      {formatSessionNum(sessionNum)}
                     </span>
                   </div>
                 );
