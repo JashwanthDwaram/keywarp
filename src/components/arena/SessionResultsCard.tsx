@@ -35,6 +35,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [challengeStatus, setChallengeStatus] = useState<string | null>(null);
   const rank = record.isSuddenDeathFailed
     ? {
         grade: 'Novice' as const,
