@@ -56,12 +56,9 @@ export const AppContent: React.FC = () => {
   const handleSessionComplete = (newRecord: TypingRecord) => {
     setRecords(prev => {
       const next = [...prev, newRecord];
-      const hasSeenWalkthrough = localStorage.getItem('typepulse_1_3_0_walkthrough_completed');
-      if (!hasSeenWalkthrough) {
-        localStorage.setItem('typepulse_1_3_0_walkthrough_completed', 'true');
-        setTimeout(() => {
-          setIsTourOpen(true);
-        }, 400);
+      const hasSeenDiscovery = localStorage.getItem('typepulse_1_3_0_discovery_seen');
+      if (!hasSeenDiscovery) {
+        setShowDiscoveryBanner(true);
       }
       return next;
     });
@@ -76,6 +73,7 @@ export const AppContent: React.FC = () => {
     localStorage.removeItem('typepulse_tour_version');
     localStorage.removeItem('typepulse_1_3_0_test_completed');
     localStorage.removeItem('typepulse_1_3_0_walkthrough_completed');
+    localStorage.removeItem('typepulse_1_3_0_discovery_seen');
   };
 
   const handleImportRecords = (imported: TypingRecord[]) => {
@@ -138,6 +136,7 @@ export const AppContent: React.FC = () => {
               type="button"
               onClick={() => {
                 setShowDiscoveryBanner(false);
+                localStorage.setItem('typepulse_1_3_0_discovery_seen', 'true');
                 localStorage.setItem('typepulse_discovery_completed', 'true');
               }}
               className="px-2.5 py-1.5 rounded-md text-xs font-medium text-ink-400 hover:text-ink-100 hover:bg-bg/60 transition-colors cursor-pointer"
@@ -148,6 +147,8 @@ export const AppContent: React.FC = () => {
               type="button"
               onClick={() => {
                 setShowDiscoveryBanner(false);
+                localStorage.setItem('typepulse_1_3_0_discovery_seen', 'true');
+                localStorage.setItem('typepulse_discovery_completed', 'true');
                 setIsTourOpen(true);
               }}
               className="px-3.5 py-1.5 rounded-md bg-accent text-accent-contrast text-xs font-semibold hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center gap-1 cursor-pointer whitespace-nowrap"
