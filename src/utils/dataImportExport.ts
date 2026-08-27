@@ -8,7 +8,7 @@ import { TypingRecord } from '../types';
 export function exportRecordsToJson(records: TypingRecord[]): void {
   const dataStr = JSON.stringify({
     app: 'TypePulse',
-    version: '1.2.8',
+    version: '1.3.0',
     exportedAt: new Date().toISOString(),
     recordsCount: records.length,
     records

@@ -9,7 +9,7 @@ import { ShaderBackground } from './components/ShaderBackground';
 import { TourModal } from './components/tour/TourModal';
 import { ThemeProvider } from './context/ThemeContext';
 
-export const CURRENT_TOUR_VERSION = '1.2.8';
+export const CURRENT_TOUR_VERSION = '1.3.0';
 
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'arena' | 'coach' | 'analytics'>('arena');
@@ -19,7 +19,7 @@ export const AppContent: React.FC = () => {
   const [showDiscoveryBanner, setShowDiscoveryBanner] = useState<boolean>(false);
   const [, startTransition] = useTransition();
 
-  // Version migration: ensures returning users on Vercel get the new v1.2.8 tour while preserving their typing records
+  // Version migration: ensures returning users on Vercel get the new v1.3.0 tour while preserving their typing records
   useEffect(() => {
     try {
       const storedVersion = localStorage.getItem('typepulse_tour_version');
@@ -27,6 +27,8 @@ export const AppContent: React.FC = () => {
         localStorage.removeItem('typepulse_discovery_completed');
         localStorage.removeItem('typepulse_tour_completed');
         localStorage.removeItem('typepulse_first_next_test_clicked');
+        localStorage.removeItem('typepulse_1_3_0_test_completed');
+        localStorage.removeItem('typepulse_1_3_0_walkthrough_completed');
       }
     } catch {}
   }, []);
@@ -54,9 +56,9 @@ export const AppContent: React.FC = () => {
   const handleSessionComplete = (newRecord: TypingRecord) => {
     setRecords(prev => {
       const next = [...prev, newRecord];
-      const hasSeenWalkthrough = localStorage.getItem('typepulse_1_2_8_walkthrough_completed');
+      const hasSeenWalkthrough = localStorage.getItem('typepulse_1_3_0_walkthrough_completed');
       if (!hasSeenWalkthrough) {
-        localStorage.setItem('typepulse_1_2_8_walkthrough_completed', 'true');
+        localStorage.setItem('typepulse_1_3_0_walkthrough_completed', 'true');
         setTimeout(() => {
           setIsTourOpen(true);
         }, 400);
@@ -72,8 +74,8 @@ export const AppContent: React.FC = () => {
     localStorage.removeItem('typepulse_tour_completed');
     localStorage.removeItem('typepulse_first_next_test_clicked');
     localStorage.removeItem('typepulse_tour_version');
-    localStorage.removeItem('typepulse_1_2_8_test_completed');
-    localStorage.removeItem('typepulse_1_2_8_walkthrough_completed');
+    localStorage.removeItem('typepulse_1_3_0_test_completed');
+    localStorage.removeItem('typepulse_1_3_0_walkthrough_completed');
   };
 
   const handleImportRecords = (imported: TypingRecord[]) => {
@@ -214,7 +216,7 @@ export const AppContent: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <span className="font-medium text-ink-100 font-mono">typepulse</span>
-            <span className="text-[10px] font-mono text-ink-400/60 px-1.5 py-0.5 rounded bg-surface border border-ink-400/15">v1.2.8</span>
+            <span className="text-[10px] font-mono text-ink-400/60 px-1.5 py-0.5 rounded bg-surface border border-ink-400/15">v1.3.0</span>
             <span className="text-ink-400/40">•</span>
             <span className="flex items-center gap-1 text-ink-400/80 font-mono text-[11px]">
               <Command className="w-3 h-3 text-accent" /> tab to restart

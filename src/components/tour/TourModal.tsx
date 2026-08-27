@@ -154,7 +154,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
     } catch {}
     localStorage.setItem('typepulse_discovery_completed', 'true');
     localStorage.setItem('typepulse_tour_completed', 'true');
-    localStorage.setItem('typepulse_tour_version', '1.2.8');
+    localStorage.setItem('typepulse_tour_version', '1.3.0');
     onTabChange('arena');
     onClose();
   };

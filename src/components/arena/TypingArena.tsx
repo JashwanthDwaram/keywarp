@@ -199,10 +199,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const wordsContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Version-scoped calibration flag: shows once for any user on 1.2.8, then permanently retires
+  // Version-scoped calibration flag: shows once for any user on 1.3.0, then permanently retires
   const [hasDoneVersionTest, setHasDoneVersionTest] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('typepulse_1_2_8_test_completed') === 'true';
+      return localStorage.getItem('typepulse_1_3_0_test_completed') === 'true';
     } catch {
       return false;
     }
@@ -547,7 +547,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     };
 
     try {
-      localStorage.setItem('typepulse_1_2_8_test_completed', 'true');
+      localStorage.setItem('typepulse_1_3_0_test_completed', 'true');
     } catch {}
     setHasDoneVersionTest(true);
     setLastCompletedRecord(newRecord);
@@ -1081,7 +1081,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
         />
       ) : null}
 
-      {/* First-Time User Calibration Baseline - Subtle Ambient Glow Subtitle (Shows once on v1.2.8, then permanently retires) */}
+      {/* First-Time User Calibration Baseline - Subtle Ambient Glow Subtitle (Shows once on v1.3.0, then permanently retires) */}
       {!startTime && !isFinished && !isZenActive && !hasDoneVersionTest && !lastCompletedRecord ? (
         <div className="w-full flex items-center justify-center animate-in fade-in duration-300 py-1 text-xs font-mono select-none">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/[0.08] border border-accent/25 shadow-[0_0_20px_rgba(var(--color-accent-rgb),0.12)] transition-all">
