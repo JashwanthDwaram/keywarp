@@ -19,9 +19,9 @@ export const AchievementsGrid: React.FC<AchievementsGridProps> = ({ records }) =
   const achievements = useMemo(() => {
     const totalSessions = records.length;
     const maxWpm = records.length > 0 ? Math.max(...records.map(r => r.netWpm)) : 0;
-    const perfect100Tests = records.filter(r => r.accuracy === 100 && r.charactersTyped >= 75).length;
-    const codeTests = records.filter(r => r.mode.toLowerCase().includes('code')).length;
-    const zeroErrorTests = records.filter(r => r.totalErrors === 0).length;
+    const perfect100Tests = records.filter(r => r.accuracy === 100 && (r.charactersTyped || 0) >= 75).length;
+    const codeTests = records.filter(r => (r.mode || '').toLowerCase().includes('code')).length;
+    const zeroErrorTests = records.filter(r => (r.totalErrors || 0) === 0).length;
 
     const list: Achievement[] = [
       {
