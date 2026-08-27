@@ -87,7 +87,7 @@ export const AICoachLab: React.FC<AICoachLabProps> = ({
       ) : null}
 
       {/* 2. Hero Personal Coach Card */}
-      <div className="rounded-lg border border-ink-400/15 bg-surface p-6 sm:p-7 space-y-5 shadow-sm">
+      <div id="coach-diagnostics-card" className="rounded-lg border border-ink-400/15 bg-surface p-6 sm:p-7 space-y-5 shadow-sm">
         {/* Header Ribbon */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">

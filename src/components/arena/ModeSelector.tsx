@@ -141,7 +141,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-wrap items-center justify-between gap-2.5 px-3 py-2 rounded-lg bg-surface/80 border border-ink-400/10 text-xs font-mono select-none">
+    <div id="arena-ribbon-card" className="w-full flex flex-wrap items-center justify-between gap-2.5 px-3 py-2 rounded-lg bg-surface/80 border border-ink-400/10 text-xs font-mono select-none">
       {/* 1. Unified Command Ribbon (All Lowercase & Clean Contrast) */}
       <div className="flex items-center gap-2 overflow-x-auto max-w-full py-0.5 scrollbar-none">
         {/* Primary Modes */}

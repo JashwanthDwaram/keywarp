@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 
 export interface WordSpanProps {
+  id?: string;
   targetWord: string;
   typedWord?: string;
   isCurrentWord: boolean;
@@ -20,6 +21,7 @@ const noLigatureStyle: React.CSSProperties = {
 };
 
 export const WordSpan: React.FC<WordSpanProps> = React.memo(({
+  id,
   targetWord,
   typedWord,
   isCurrentWord,
@@ -69,6 +71,7 @@ export const WordSpan: React.FC<WordSpanProps> = React.memo(({
 
     return (
       <span
+        id={id}
         style={noLigatureStyle}
         className="inline-block mr-[0.45em] select-none font-mono whitespace-nowrap"
       >
@@ -140,6 +143,7 @@ export const WordSpan: React.FC<WordSpanProps> = React.memo(({
 
     return (
       <span
+        id={id}
         style={noLigatureStyle}
         className={`inline-block mr-[0.45em] select-none font-mono whitespace-nowrap ${
           hasSpaceError ? 'border-b border-dotted border-incorrect/60' : ''
@@ -188,6 +192,7 @@ export const WordSpan: React.FC<WordSpanProps> = React.memo(({
   // 3. Future Word
   return (
     <span
+      id={id}
       style={noLigatureStyle}
       className="inline-block mr-[0.45em] select-none font-mono whitespace-nowrap text-ink-400/50"
     >

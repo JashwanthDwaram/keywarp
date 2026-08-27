@@ -72,3 +72,40 @@ code,
 .animate-caret {
   animation: block-caret-blink 1.05s ease-in-out infinite;
 }
+
+/* In-Situ Tour Glowing Card Spotlight - Smooth Breathing Aura */
+@keyframes tour-spotlight-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--color-bg, #1a1a16), 0 0 0 4px var(--color-accent, #d85a30), 0 0 24px rgba(var(--color-accent-rgb, 216, 90, 48), 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 2px var(--color-bg, #1a1a16), 0 0 0 4px var(--color-accent, #d85a30), 0 0 44px rgba(var(--color-accent-rgb, 216, 90, 48), 0.75);
+  }
+}
+
+.tour-spotlight-active {
+  animation: tour-spotlight-breathe 2.6s ease-in-out infinite !important;
+  border-color: var(--color-accent, #d85a30) !important;
+  background-color: var(--color-surface, #22221c) !important;
+  position: relative !important;
+  z-index: 40 !important;
+  transition: all 0.3s ease !important;
+}
+
+/* First-time guidance: Next Test button pulsing glow */
+@keyframes first-time-next-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 1px var(--color-accent, #d85a30), 0 0 12px rgba(var(--color-accent-rgb, 216, 90, 48), 0.45);
+    border-color: var(--color-accent, #d85a30);
+  }
+  50% {
+    box-shadow: 0 0 0 1.5px var(--color-accent, #d85a30), 0 0 26px rgba(var(--color-accent-rgb, 216, 90, 48), 0.85);
+    border-color: var(--color-accent, #d85a30);
+  }
+}
+
+.first-time-next-glow {
+  animation: first-time-next-glow 2.2s ease-in-out infinite !important;
+  border-color: var(--color-accent, #d85a30) !important;
+  background-color: var(--color-surface, #22221c) !important;
+}

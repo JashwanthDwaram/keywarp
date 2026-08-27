@@ -193,7 +193,7 @@ export const BiomechanicalKeyboardHeatmap: React.FC<BiomechanicalKeyboardHeatmap
   };
 
   return (
-    <div className="rounded-lg border border-ink-400/15 bg-surface p-4 sm:p-5 space-y-4 font-sans select-none">
+    <div id="analytics-heatmap-card" className="rounded-lg border border-ink-400/15 bg-surface p-4 sm:p-5 space-y-4 font-sans select-none">
       {/* Top Header with Switchable Mode Toggle */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-400/10 pb-3">
         <div className="flex items-center gap-2">

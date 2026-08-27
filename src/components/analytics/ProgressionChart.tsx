@@ -57,7 +57,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
   const hoveredRecord = hoverIndex !== null ? recent[hoverIndex] : null;
 
   return (
-    <div className="p-4 sm:p-5 rounded-lg border border-ink-400/15 bg-surface flex flex-col justify-between shadow-sm font-sans h-full min-h-[340px] space-y-4">
+    <div id="progression-chart-card" className="p-4 sm:p-5 rounded-lg border border-ink-400/15 bg-surface flex flex-col justify-between shadow-sm font-sans h-full min-h-[340px] space-y-4">
       {/* Header & 3-Mode View Switcher Pill Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-ink-400/10">
         <div className="flex items-center gap-2">

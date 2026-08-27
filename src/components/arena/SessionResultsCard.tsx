@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, ArrowRight, Award, Zap, Target, Clock, AlertTriangle, Sparkles, BarChart2, Check, Share2, Swords } from 'lucide-react';
+import { RotateCcw, ArrowRight, Award, Zap, Target, Clock, AlertTriangle, Sparkles, BarChart2, Check, Share2, Swords, Compass } from 'lucide-react';
 import { TypingRecord } from '../../types';
 import { getPerformanceRank } from '../../utils/typingMath';
 import { generateChallengeUrl } from '../../utils/challengeUtils';
@@ -20,6 +20,7 @@ export interface SessionResultsCardProps {
   onNextTest: () => void;
   onOpenCoach?: () => void;
   onPracticeMistakes?: (mistakeText: string) => void;
+  onOpenTour?: () => void;
 }
 
 export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
@@ -29,7 +30,8 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
   onRestart,
   onNextTest,
   onOpenCoach,
-  onPracticeMistakes
+  onPracticeMistakes,
+  onOpenTour
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
@@ -53,8 +55,8 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
 
   // Waveform graph calculations: ensure clean numeric coordinates and smooth progression
   const width = 640;
-  const height = 140;
-  const padding = { top: 15, right: 25, bottom: 20, left: 30 };
+  const height = 110;
+  const padding = { top: 10, right: 20, bottom: 18, left: 28 };
 
   const validSnapshots = React.useMemo(() => {
     const rawSnaps = (snapshots || []).filter(s => Number.isFinite(s.wpm) && s.second >= 1);
@@ -77,7 +79,57 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
     ];
   }, [snapshots, record]);
 
-  const maxWpm = Math.max(40, ...validSnapshots.map(s => Math.max(s.wpm, s.raw))) + 10;
+  // Check if this test is a new personal best net WPM
+  const isPersonalBest = React.useMemo(() => {
+    try {
+      const stored = localStorage.getItem('typepulse_records');
+      if (!stored) return false;
+      const recs = JSON.parse(stored);
+      const otherRecs = recs.filter((r: any) => r.id !== record.id);
+      if (otherRecs.length === 0) return false;
+      const maxPrev = Math.max(...otherRecs.map((r: any) => r.netWpm || 0));
+      return record.netWpm > maxPrev;
+    } catch {
+      return false;
+    }
+  }, [record]);
+
+  // Historical average benchmark
+  const avgPastWpm = React.useMemo(() => {
+    try {
+      const stored = localStorage.getItem('typepulse_records');
+      if (!stored) return null;
+      const recs = JSON.parse(stored);
+      const otherRecs = recs.filter((r: any) => r.id !== record.id);
+      if (otherRecs.length < 2) return null;
+      const sum = otherRecs.reduce((acc: number, r: any) => acc + (r.netWpm || 0), 0);
+      return Math.round(sum / otherRecs.length);
+    } catch {
+      return null;
+    }
+  }, [record]);
+
+  // First-time guidance: Pulse-glow the "Next test" button after first test and tour completion
+  const shouldGlowNextTest = React.useMemo(() => {
+    try {
+      const hasClickedNextBefore = localStorage.getItem('typepulse_first_next_test_clicked');
+      if (hasClickedNextBefore) return false;
+      const tourCompleted = localStorage.getItem('typepulse_tour_completed') || localStorage.getItem('typepulse_discovery_completed');
+      const recs = JSON.parse(localStorage.getItem('typepulse_records') || '[]');
+      return recs.length <= 1 || Boolean(tourCompleted);
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const handleNextTestClick = () => {
+    try {
+      localStorage.setItem('typepulse_first_next_test_clicked', 'true');
+    } catch {}
+    onNextTest();
+  };
+
+  const maxWpm = Math.max(40, avgPastWpm ? avgPastWpm + 10 : 0, ...validSnapshots.map(s => Math.max(s.wpm, s.raw))) + 10;
   const maxSec = Math.max(2, validSnapshots[validSnapshots.length - 1].second);
 
   const getX = (sec: number) => {
@@ -249,16 +301,24 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto rounded border border-ink-400/15 bg-surface p-5 sm:p-6 space-y-5">
+    <div id="session-results-card" className="w-full max-w-3xl mx-auto rounded border border-ink-400/15 bg-surface p-4 sm:p-5 space-y-3 sm:space-y-4">
       {/* Header with Certified Rank */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-ink-400/10">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-ink-400/10">
         <div>
-          <div className="text-xs text-accent font-mono mb-1">
+          <div className="text-xs text-accent font-mono mb-0.5">
             Session completed • {record.mode.toLowerCase()} ({record.difficulty.toLowerCase()})
           </div>
-          <h2 className="text-xl sm:text-2xl font-medium text-ink-100 font-sans">
-            Performance summary
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-medium text-ink-100 font-sans">
+              Performance summary
+            </h2>
+            {isPersonalBest && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-400 font-mono text-[10px] font-semibold tracking-wider shadow-[0_0_12px_rgba(245,158,11,0.25)] animate-pulse">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>NEW PB</span>
+              </span>
+            )}
+          </div>
           <p className="text-xs text-ink-400 font-sans mt-0.5">
             {rank.description}
           </p>
@@ -266,13 +326,13 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
 
         {/* Rank Badge & Share/Challenge Actions */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded border border-ink-400/20 bg-bg/50">
-            <Award className="w-4 h-4 text-accent" aria-hidden="true" />
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border border-ink-400/20 bg-bg/50">
+            <Award className="w-3.5 h-3.5 text-accent" aria-hidden="true" />
             <div>
-              <div className="text-[10px] text-ink-400 font-sans">
+              <div className="text-[9px] text-ink-400 font-sans leading-none mb-0.5">
                 Certified rank
               </div>
-              <div className="text-xs font-medium text-ink-100 font-sans">
+              <div className="text-xs font-medium text-ink-100 font-sans leading-none">
                 {rank.title}
               </div>
             </div>
@@ -301,60 +361,60 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
       </div>
 
       {/* KPI 4-Card Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
         {/* Net WPM */}
-        <div className="p-3 rounded bg-bg/50 border border-ink-400/15">
-          <div className="text-[11px] text-ink-400 font-sans flex items-center gap-1.5 mb-1">
+        <div className="p-2.5 sm:p-3 rounded bg-bg/50 border border-ink-400/15">
+          <div className="text-[11px] text-ink-400 font-sans flex items-center gap-1.5 mb-0.5">
             <Zap className="w-3 h-3 text-accent" />
             Net speed
           </div>
-          <div className="text-2xl sm:text-3xl font-medium text-ink-100 font-mono tabular-nums">
+          <div className="text-2xl font-medium text-ink-100 font-mono tabular-nums">
             {record.netWpm}
             <span className="text-xs text-ink-400 font-sans font-normal ml-1">wpm</span>
           </div>
-          <div className="text-[11px] text-ink-400 mt-0.5 font-mono">
+          <div className="text-[10px] text-ink-400 font-mono">
             Gross: {record.grossWpm} wpm
           </div>
         </div>
 
         {/* Accuracy */}
-        <div className="p-3 rounded bg-bg/50 border border-ink-400/15">
-          <div className="text-[11px] text-ink-400 font-sans flex items-center gap-1.5 mb-1">
+        <div className="p-2.5 sm:p-3 rounded bg-bg/50 border border-ink-400/15">
+          <div className="text-[11px] text-ink-400 font-sans flex items-center gap-1.5 mb-0.5">
             <Target className="w-3 h-3 text-correct" />
             Accuracy
           </div>
-          <div className="text-2xl sm:text-3xl font-medium text-correct font-mono tabular-nums">
+          <div className="text-2xl font-medium text-correct font-mono tabular-nums">
             {record.accuracy}%
           </div>
-          <div className="text-[11px] text-ink-400 mt-0.5 font-mono">
+          <div className="text-[10px] text-ink-400 font-mono">
             {record.charactersTyped} characters
           </div>
         </div>
 
         {/* Duration */}
-        <div className="p-3 rounded bg-bg/50 border border-ink-400/15">
-          <div className="text-[11px] text-ink-400 font-sans flex items-center gap-1.5 mb-1">
+        <div className="p-2.5 sm:p-3 rounded bg-bg/50 border border-ink-400/15">
+          <div className="text-[11px] text-ink-400 font-sans flex items-center gap-1.5 mb-0.5">
             <Clock className="w-3 h-3 text-ink-400" />
             Duration
           </div>
-          <div className="text-2xl sm:text-3xl font-medium text-ink-100 font-mono tabular-nums">
+          <div className="text-2xl font-medium text-ink-100 font-mono tabular-nums">
             {record.timeSeconds.toFixed(1)}s
           </div>
-          <div className="text-[11px] text-ink-400 mt-0.5 font-mono">
+          <div className="text-[10px] text-ink-400 font-mono">
             {Math.floor(record.charactersTyped / 5)} words
           </div>
         </div>
 
         {/* Mistakes */}
-        <div className="p-3 rounded bg-bg/50 border border-ink-400/15">
-          <div className="text-[11px] text-ink-400 font-sans flex items-center gap-1.5 mb-1">
+        <div className="p-2.5 sm:p-3 rounded bg-bg/50 border border-ink-400/15">
+          <div className="text-[11px] text-ink-400 font-sans flex items-center gap-1.5 mb-0.5">
             <AlertTriangle className="w-3 h-3 text-incorrect" />
             Errors
           </div>
-          <div className="text-2xl sm:text-3xl font-medium text-incorrect font-mono tabular-nums">
+          <div className="text-2xl font-medium text-incorrect font-mono tabular-nums">
             {record.totalErrors}
           </div>
-          <div className="text-[11px] text-ink-400 mt-0.5 font-mono">
+          <div className="text-[10px] text-ink-400 font-mono">
             {parsedMistakes.length} unique keys
           </div>
         </div>
@@ -362,7 +422,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
 
       {/* Cadence Waveform */}
       {validSnapshots.length > 1 ? (
-        <div className="p-4 rounded bg-bg/50 border border-ink-400/15 space-y-2">
+        <div className="p-3 sm:p-3.5 rounded bg-bg/50 border border-ink-400/15 space-y-1.5">
           <div className="flex items-center justify-between">
             <div className="text-xs text-ink-400 font-sans flex items-center gap-1.5">
               <BarChart2 className="w-3.5 h-3.5 text-accent" />
@@ -377,6 +437,12 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
                 <span className="w-2 h-0.5 border-b border-dashed border-ink-400 inline-block" />
                 Gross
               </span>
+              {avgPastWpm && avgPastWpm > 0 && (
+                <span className="flex items-center gap-1 text-ink-400/60 hidden sm:inline-flex" title="Your overall average speed across previous sessions">
+                  <span className="w-2 h-0.5 border-b border-dotted border-ink-400/70 inline-block" />
+                  Past Avg ({avgPastWpm} wpm)
+                </span>
+              )}
             </div>
           </div>
 
@@ -386,6 +452,30 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
               className="w-full h-auto overflow-visible"
               onMouseLeave={() => setHoverIndex(null)}
             >
+              {/* Historical Average Ghost Benchmark Line */}
+              {avgPastWpm && avgPastWpm > 0 && (
+                <g>
+                  <line
+                    x1={padding.left}
+                    y1={getY(avgPastWpm)}
+                    x2={width - padding.right}
+                    y2={getY(avgPastWpm)}
+                    className="stroke-ink-400"
+                    strokeOpacity="0.3"
+                    strokeWidth="1.2"
+                    strokeDasharray="3 3"
+                  />
+                  <text
+                    x={width - padding.right + 2}
+                    y={getY(avgPastWpm) + 3}
+                    className="fill-ink-400/50 hidden sm:inline"
+                    fontSize="8"
+                    fontFamily="monospace"
+                  >
+                    avg
+                  </text>
+                </g>
+              )}
               {/* Grid Lines */}
               {[0.33, 0.66, 1].map(r => {
                 const val = Math.round(maxWpm * r);
@@ -561,14 +651,26 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
               Run diagnostics
             </Button>
           ) : null}
+
+          {onOpenTour && !localStorage.getItem('typepulse_discovery_completed') ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onOpenTour}
+              icon={<Compass className="w-3.5 h-3.5 text-accent" />}
+            >
+              Interactive tour (30s)
+            </Button>
+          ) : null}
         </div>
 
         <Button
           variant="primary"
           size="sm"
-          onClick={onNextTest}
-          icon={<ArrowRight className="w-3.5 h-3.5 text-ink-100" />}
+          onClick={handleNextTestClick}
+          icon={<ArrowRight className={`w-3.5 h-3.5 ${shouldGlowNextTest ? 'text-accent' : 'text-ink-100'}`} />}
           iconPosition="right"
+          className={shouldGlowNextTest ? 'first-time-next-glow text-ink-100 font-medium' : ''}
         >
           Next test (Tab + Enter)
         </Button>

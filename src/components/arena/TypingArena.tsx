@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { RotateCcw, Sparkles, Minimize2, X, FileText, Check, Ghost, Skull, Flame, Swords, Zap, Upload, Code2 } from 'lucide-react';
+import { RotateCcw, Sparkles, Minimize2, X, FileText, Check, Ghost, Skull, Flame, Swords, Zap, Upload, Code2, Clock } from 'lucide-react';
 import { TypingRecord } from '../../types';
 import { SPRINT_WORDS, getRandomPassage, getRandomQuote } from '../../data/passages';
 import { generateRandomPassage } from '../../utils/sentenceGenerator';
@@ -18,6 +18,7 @@ import { Button } from '../ui/Button';
 export interface TypingArenaProps {
   onSessionComplete: (record: TypingRecord) => void;
   onOpenCoach?: () => void;
+  onOpenTour?: () => void;
   onZenModeChange?: (isZen: boolean) => void;
   customDrillText?: string | null;
   onClearCustomDrill?: () => void;
@@ -108,7 +109,7 @@ const getInitialTargetText = (
   } else if (initMode === 'Code') {
     return { text: getRandomCodeSnippet(lang), author: null };
   } else if (initMode === 'Time') {
-    const stream = Array.from({ length: 120 }, () =>
+    const stream = Array.from({ length: 36 }, () =>
       SPRINT_WORDS[Math.floor(Math.random() * SPRINT_WORDS.length)]
     ).join(' ');
     return { text: stream, author: null };
@@ -125,6 +126,7 @@ const getInitialTargetText = (
 export const TypingArena: React.FC<TypingArenaProps> = ({
   onSessionComplete,
   onOpenCoach,
+  onOpenTour,
   onZenModeChange,
   customDrillText,
   onClearCustomDrill
@@ -193,6 +195,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const wordsContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-zen active when typing is in progress or when manually toggled
@@ -202,6 +205,22 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const words = useMemo(() => {
     return targetText.trim().split(/\s+/).filter(Boolean);
   }, [targetText]);
+
+  // Smoothly keep the active word line visible in the 3-line focus window
+  useEffect(() => {
+    if (!wordsContainerRef.current) return;
+    const activeEl = document.getElementById(`word-${wordIndex}`);
+    if (activeEl && wordsContainerRef.current) {
+      const container = wordsContainerRef.current;
+      const wordTop = activeEl.offsetTop;
+      const lineHeight = activeEl.offsetHeight || 38;
+      if (wordTop > lineHeight * 0.9) {
+        container.scrollTo({ top: wordTop - lineHeight, behavior: 'smooth' });
+      } else {
+        container.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }, [wordIndex]);
 
   // Initial focus on mount
   useEffect(() => {
@@ -242,7 +261,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       setTargetText(getRandomCodeSnippet(selectedLang));
       setQuoteAuthor(null);
     } else if (selectedMode === 'Time') {
-      const poolSize = Math.max(120, Math.ceil(sprintDuration * 4.5));
+      const poolSize = Math.max(30, Math.min(60, Math.round(sprintDuration * 1.2)));
       const stream = Array.from({ length: poolSize }, () =>
         SPRINT_WORDS[Math.floor(Math.random() * SPRINT_WORDS.length)]
       ).join(' ');
@@ -936,7 +955,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       ) : null}
 
       {/* Single Unified Minimalist Mode Ribbon */}
-      {!isFinished && !isZenActive ? (
+      {!isZenActive ? (
         <ModeSelector
           mode={mode}
           difficulty={difficulty}
@@ -1003,8 +1022,20 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
         />
       ) : null}
 
-      {/* Whisper-Light Ambient Telemetry */}
-      {!isZenActive ? (
+      {/* First-Time User Calibration Baseline - Subtle Ambient Glow Subtitle */}
+      {!startTime && !isFinished && !isZenActive && !localStorage.getItem('typepulse_discovery_completed') ? (
+        <div className="w-full flex items-center justify-center animate-in fade-in duration-300 py-1 text-xs font-mono select-none">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/[0.08] border border-accent/25 shadow-[0_0_20px_rgba(var(--color-accent-rgb),0.12)] transition-all">
+            <span className="text-accent text-xs animate-pulse drop-shadow-[0_0_6px_rgba(var(--color-accent-rgb),0.9)]">✦</span>
+            <span className="text-ink-400 font-normal">
+              Complete <span className="text-ink-100 font-medium">1st test</span> to calibrate AI Coach & Biomechanical Heatmap
+            </span>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Whisper-Light Ambient Telemetry (Only when active typing) */}
+      {!isFinished && !isZenActive ? (
         <TelemetryHUD
           netWpm={startTime ? smoothedNetWpm : 0}
           grossWpm={startTime ? smoothedGrossWpm : 0}
@@ -1025,6 +1056,22 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           }`}
           onClick={handleCanvasClick}
         >
+          {/* Zen Mode Live Countdown Timer (Top-Right of Canvas) */}
+          {isZenActive && mode === 'Time' && (
+            <div
+              className={`absolute top-4 right-6 flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono z-20 pointer-events-none transition-all duration-200 ${
+                sprintRemainingSeconds !== undefined && sprintRemainingSeconds <= 5 && startTime
+                  ? 'bg-accent/20 border border-accent text-accent shadow-[0_0_15px_rgba(var(--color-accent-rgb),0.5)] font-bold animate-pulse'
+                  : 'bg-surface/70 border border-ink-400/15 text-ink-400'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 text-accent/80 shrink-0" />
+              <span className="text-ink-100/90 font-medium tabular-nums text-xs">
+                {sprintRemainingSeconds !== undefined ? Math.ceil(sprintRemainingSeconds) : sprintDuration}s
+              </span>
+            </div>
+          )}
+
           {/* Escalating Tiered Streak Indicator (Starts at 15 letters, decays on pause) */}
           {streak >= 15 && (
             <div
@@ -1072,8 +1119,8 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             aria-label="Touch typing input arena"
           />
 
-          {/* Typing Text Block: Word-Buffered Engine with pointer-events-none */}
-          <div className="pointer-events-none">
+          {/* Typing Text Block: Word-Buffered Engine */}
+          <div className="pointer-events-none w-full py-1">
             <div
               className="font-mono text-lg sm:text-2xl leading-relaxed tracking-normal select-none flex flex-wrap items-baseline font-normal"
               style={{ fontVariantLigatures: 'none', fontFeatureSettings: '"calt" 0, "liga" 0' }}
@@ -1110,7 +1157,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           </div>
 
           {/* Subtle Bottom Restart Trigger / Sound / Shortcuts Bar */}
-          <div className="flex items-center justify-between pt-4 text-xs font-mono text-ink-400 select-none relative z-30 pointer-events-auto">
+          <div className="flex items-center justify-between pt-4 mt-3 border-t border-ink-400/10 text-xs font-mono text-ink-400 select-none relative z-30 pointer-events-auto">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -1180,6 +1227,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           onRestart={repeatCurrentPassage}
           onNextTest={() => loadNewText(mode, difficulty, wordCount)}
           onOpenCoach={onOpenCoach}
+          onOpenTour={onOpenTour}
           onPracticeMistakes={(mistakeText) => {
             setPreviousRun(null);
             setTargetText(mistakeText);

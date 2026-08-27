@@ -43,9 +43,10 @@ export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
         </div>
 
         {isTimeSprint ? (
-          <span className="text-accent font-medium tabular-nums text-xs">
-            {sprintRemainingSeconds !== undefined ? `${Math.ceil(sprintRemainingSeconds)}s remaining` : '30s'}
-          </span>
+          <div className="flex items-center gap-1.5 text-accent font-medium tabular-nums text-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <span>{sprintRemainingSeconds !== undefined ? `${Math.ceil(sprintRemainingSeconds)}s remaining` : '30s remaining'}</span>
+          </div>
         ) : (
           <span className="text-ink-400/60 text-[11px] tabular-nums">
             {isTyping ? `${Math.round(progressPercent)}% done` : 'ready'}

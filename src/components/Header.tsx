@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, BarChart3, Palette, Zap, HelpCircle } from 'lucide-react';
+import { Sparkles, BarChart3, Palette, Zap, Compass } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 export interface HeaderProps {
@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'text-ink-400 hover:text-ink-100 hover:bg-bg/40'
             }`}
           >
-            <BarChart3 className="w-3.5 h-3.5 text-ink-400" aria-hidden="true" />
+            <BarChart3 className="w-3.5 h-3.5 text-accent" aria-hidden="true" />
             <span>Stats</span>
           </button>
         </nav>
@@ -112,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-1 px-2 py-1 rounded bg-surface border border-ink-400/15 text-xs text-ink-400 hover:text-accent hover:border-accent/40 transition-colors cursor-pointer"
               title="Interactive Tour & Guide"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-accent" />
+              <Compass className="w-3.5 h-3.5 text-accent" />
               <span className="hidden md:inline font-sans text-[11px]">Tour</span>
             </button>
           )}
