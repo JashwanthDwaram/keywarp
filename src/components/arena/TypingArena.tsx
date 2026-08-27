@@ -1056,10 +1056,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           }`}
           onClick={handleCanvasClick}
         >
-          {/* Zen Mode Live Countdown Timer (Top-Right of Canvas) */}
+          {/* Zen Mode Live Countdown Timer (Top-Left of Canvas to avoid streak overlap) */}
           {isZenActive && mode === 'Time' && (
             <div
-              className={`absolute top-4 right-6 flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono z-20 pointer-events-none transition-all duration-200 ${
+              className={`absolute top-4 left-6 flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono z-20 pointer-events-none transition-all duration-200 ${
                 sprintRemainingSeconds !== undefined && sprintRemainingSeconds <= 5 && startTime
                   ? 'bg-accent/20 border border-accent text-accent shadow-[0_0_15px_rgba(var(--color-accent-rgb),0.5)] font-bold animate-pulse'
                   : 'bg-surface/70 border border-ink-400/15 text-ink-400'
