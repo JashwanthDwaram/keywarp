@@ -54,10 +54,12 @@ export const AppContent: React.FC = () => {
   const handleSessionComplete = (newRecord: TypingRecord) => {
     setRecords(prev => {
       const next = [...prev, newRecord];
-      const isVersionTourDone = localStorage.getItem('typepulse_tour_version') === CURRENT_TOUR_VERSION;
-      const isDiscoveryDone = localStorage.getItem('typepulse_discovery_completed');
-      if (!isVersionTourDone && !isDiscoveryDone) {
-        setShowDiscoveryBanner(true);
+      const hasSeenWalkthrough = localStorage.getItem('typepulse_1_2_8_walkthrough_completed');
+      if (!hasSeenWalkthrough) {
+        localStorage.setItem('typepulse_1_2_8_walkthrough_completed', 'true');
+        setTimeout(() => {
+          setIsTourOpen(true);
+        }, 400);
       }
       return next;
     });
@@ -71,6 +73,7 @@ export const AppContent: React.FC = () => {
     localStorage.removeItem('typepulse_first_next_test_clicked');
     localStorage.removeItem('typepulse_tour_version');
     localStorage.removeItem('typepulse_1_2_8_test_completed');
+    localStorage.removeItem('typepulse_1_2_8_walkthrough_completed');
   };
 
   const handleImportRecords = (imported: TypingRecord[]) => {
