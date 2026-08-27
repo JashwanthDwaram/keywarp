@@ -70,6 +70,7 @@ export const AppContent: React.FC = () => {
     localStorage.removeItem('typepulse_tour_completed');
     localStorage.removeItem('typepulse_first_next_test_clicked');
     localStorage.removeItem('typepulse_tour_version');
+    localStorage.removeItem('typepulse_1_2_8_test_completed');
   };
 
   const handleImportRecords = (imported: TypingRecord[]) => {
