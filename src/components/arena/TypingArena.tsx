@@ -199,6 +199,18 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const wordsContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Check if historical records exist to only show first-time calibration for brand new users
+  const hasHistoricalRecords = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('typepulse_records');
+      if (!saved) return false;
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) && parsed.length > 0;
+    } catch {
+      return false;
+    }
+  }, [isFinished]);
+
   // Auto-zen active when typing is in progress or when manually toggled
   const isZenActive = (zenMode || Boolean(startTime && !isFinished));
 
@@ -1068,8 +1080,8 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
         />
       ) : null}
 
-      {/* First-Time User Calibration Baseline - Subtle Ambient Glow Subtitle */}
-      {!startTime && !isFinished && !isZenActive && !localStorage.getItem('typepulse_discovery_completed') ? (
+      {/* First-Time User Calibration Baseline - Subtle Ambient Glow Subtitle (Only for brand new users with 0 tests) */}
+      {!startTime && !isFinished && !isZenActive && !hasHistoricalRecords && !lastCompletedRecord ? (
         <div className="w-full flex items-center justify-center animate-in fade-in duration-300 py-1 text-xs font-mono select-none">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/[0.08] border border-accent/25 shadow-[0_0_20px_rgba(var(--color-accent-rgb),0.12)] transition-all">
             <span className="text-accent text-xs animate-pulse drop-shadow-[0_0_6px_rgba(var(--color-accent-rgb),0.9)]">✦</span>

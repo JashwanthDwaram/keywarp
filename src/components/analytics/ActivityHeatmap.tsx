@@ -44,7 +44,8 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ records }) => 
     // Calculate active days & current daily streak
     let streak = 0;
     let checkDate = new Date(today);
-    while (true) {
+    let guard = 0;
+    while (guard++ < 365) {
       const dStr = toLocalDateStr(checkDate);
       if (dateCounts[dStr] && dateCounts[dStr] > 0) {
         streak++;

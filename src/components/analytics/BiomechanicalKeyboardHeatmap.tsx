@@ -144,7 +144,8 @@ export const BiomechanicalKeyboardHeatmap: React.FC<BiomechanicalKeyboardHeatmap
 
     let streak = 0;
     const checkDate = new Date(today);
-    while (true) {
+    let guard = 0;
+    while (guard++ < 365) {
       const dStr = toLocalDateStr(checkDate);
       if (dateCounts[dStr] && dateCounts[dStr] > 0) {
         streak++;
