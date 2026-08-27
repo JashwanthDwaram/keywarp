@@ -88,17 +88,18 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
 
   // Check if this test is a new personal best net WPM
   const isPersonalBest = React.useMemo(() => {
-    if (record.isDisqualified || record.isSuddenDeathFailed || record.timeSeconds < 3 || record.charactersTyped < 15) {
+    if (record.isDisqualified || record.isSuddenDeathFailed || (record.timeSeconds || 0) < 3 || (record.charactersTyped || 0) < 15) {
       return false;
     }
     try {
       const stored = localStorage.getItem('typepulse_records');
       if (!stored) return false;
       const recs = JSON.parse(stored);
-      const otherRecs = recs.filter((r: any) => r.id !== record.id && !r.isDisqualified && !r.isSuddenDeathFailed && (r.timeSeconds >= 3 || r.charactersTyped >= 15));
+      if (!Array.isArray(recs)) return false;
+      const otherRecs = recs.filter((r: any) => r && typeof r === 'object' && r.id !== record.id && !r.isDisqualified && !r.isSuddenDeathFailed && ((r.timeSeconds || 0) >= 3 || (r.charactersTyped || 0) >= 15));
       if (otherRecs.length === 0) return false;
       const maxPrev = Math.max(...otherRecs.map((r: any) => r.netWpm || 0));
-      return record.netWpm > maxPrev;
+      return (record.netWpm || 0) > maxPrev;
     } catch {
       return false;
     }
@@ -110,7 +111,8 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
       const stored = localStorage.getItem('typepulse_records');
       if (!stored) return null;
       const recs = JSON.parse(stored);
-      const otherRecs = recs.filter((r: any) => r.id !== record.id && !r.isDisqualified && !r.isSuddenDeathFailed && (r.timeSeconds >= 3 || r.charactersTyped >= 15));
+      if (!Array.isArray(recs)) return null;
+      const otherRecs = recs.filter((r: any) => r && typeof r === 'object' && r.id !== record.id && !r.isDisqualified && !r.isSuddenDeathFailed && ((r.timeSeconds || 0) >= 3 || (r.charactersTyped || 0) >= 15));
       if (otherRecs.length < 2) return null;
       const sum = otherRecs.reduce((acc: number, r: any) => acc + (r.netWpm || 0), 0);
       return Math.round(sum / otherRecs.length);

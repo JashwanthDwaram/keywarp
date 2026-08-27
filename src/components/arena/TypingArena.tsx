@@ -664,7 +664,16 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     if (mode !== 'Time' && wordIndex === words.length - 1 && updatedInput === activeWord) {
       setTypedWords(prev => [...prev, updatedInput]);
       setCurrentInput('');
-      finishSession();
+      const finalTotal = totalKeystrokes + 1;
+      const finalCorrect = correctKeystrokes + (isCorrect ? 1 : 0);
+      const finalIncorrect = incorrectKeystrokes + (!isCorrect ? 1 : 0);
+      finishSession({
+        totalKeystrokes: finalTotal,
+        correctKeystrokes: finalCorrect,
+        incorrectKeystrokes: finalIncorrect,
+        mistypedMap: isCorrect ? mistypedKeysMap : { ...mistypedKeysMap, [expectedChar || '[space]']: (mistypedKeysMap[expectedChar || '[space]'] || 0) + 1 }
+      });
+      return;
     }
   }, [
     isFinished,
