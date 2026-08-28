@@ -6,7 +6,7 @@ Inspired by modern dark mode UI design systems (slate + indigo/emerald/rose acce
 WINDOW_WIDTH = 1100
 WINDOW_HEIGHT = 720
 FPS = 60
-WINDOW_TITLE = "TypePulse - Real-time Typing Speed Test & Analytics"
+WINDOW_TITLE = "KeyWarp - Real-time Typing Speed Test & Analytics"
 
 # Color Palette (RGB)
 BG_MAIN = (15, 23, 42)          # Slate 900

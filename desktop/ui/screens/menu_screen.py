@@ -84,7 +84,7 @@ class MenuScreen:
 
         # Header Title
         title_font = FontManager.get_font(38, bold=True)
-        title_surf = title_font.render("TypePulse", True, TEXT_PRIMARY)
+        title_surf = title_font.render("KeyWarp", True, TEXT_PRIMARY)
         surface.blit(title_surf, (surface.get_width() // 2 - title_surf.get_width() // 2 - 40, 45))
 
         badge_font = FontManager.get_font(12, bold=True)

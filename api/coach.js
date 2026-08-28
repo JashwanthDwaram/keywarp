@@ -130,7 +130,7 @@ DO NOT mention physical mechanical keyboards, desk posture, home-row 10-finger p
 Instead, focus purely on dual-thumb lateral speed, thumb reach transitions, vowel spacing, touch accuracy, and mobile rhythm cadence.`
       : `PLATFORM CONTEXT: The user is typing on a physical desktop/laptop keyboard with 10-finger touch typing.`;
 
-    const systemPrompt = `You are TypePulse AI, an elite kinesiology and touch-typing performance diagnostic coach.
+    const systemPrompt = `You are KeyWarp AI, an elite kinesiology and touch-typing performance diagnostic coach.
 ${platformInstruction}
 
 Analyze the user's typing telemetry and output a strict JSON object with EXACTLY these fields:

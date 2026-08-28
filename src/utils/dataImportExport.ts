@@ -1,14 +1,14 @@
 import { TypingRecord } from '../types';
 
 /**
- * TypePulse Data Export and Import Utilities
- * Supports native TypePulse JSON and Monkeytype export JSON formats.
+ * KeyWarp Data Export and Import Utilities
+ * Supports native KeyWarp JSON, legacy TypePulse JSON, and Monkeytype export JSON formats.
  */
 
 export function exportRecordsToJson(records: TypingRecord[]): void {
   const dataStr = JSON.stringify({
-    app: 'TypePulse',
-    version: '1.3.0',
+    app: 'KeyWarp',
+    version: '1.4.0',
     exportedAt: new Date().toISOString(),
     recordsCount: records.length,
     records
@@ -18,7 +18,7 @@ export function exportRecordsToJson(records: TypingRecord[]): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `typepulse_backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `keywarp_backup_${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -28,8 +28,8 @@ export function exportRecordsToJson(records: TypingRecord[]): void {
 export function parseImportedJson(jsonText: string): { records: TypingRecord[]; count: number } {
   const parsed = JSON.parse(jsonText);
 
-  // Case 1: Native TypePulse JSON format
-  if (parsed.app === 'TypePulse' && Array.isArray(parsed.records)) {
+  // Case 1: Native KeyWarp or legacy TypePulse JSON format
+  if ((parsed.app === 'KeyWarp' || parsed.app === 'TypePulse') && Array.isArray(parsed.records)) {
     return {
       records: parsed.records,
       count: parsed.records.length
@@ -77,5 +77,5 @@ export function parseImportedJson(jsonText: string): { records: TypingRecord[]; 
     };
   }
 
-  throw new Error('Unsupported JSON file format. Expected TypePulse or Monkeytype backup.');
+  throw new Error('Unsupported JSON file format. Expected KeyWarp, TypePulse, or Monkeytype backup.');
 }

@@ -15,7 +15,7 @@ export function parseCodeForTyping(rawInput: string, customTitle = 'Custom Code 
   if (!rawInput || !rawInput.trim()) {
     return {
       title: customTitle,
-      cleanText: 'const greet = () => console.log("Hello, TypePulse!");',
+      cleanText: 'const greet = () => console.log("Hello, KeyWarp!");',
       lineCount: 1,
       wordCount: 7,
       charCount: 52

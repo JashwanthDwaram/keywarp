@@ -9,7 +9,7 @@ import { ShaderBackground } from './components/ShaderBackground';
 import { TourModal } from './components/tour/TourModal';
 import { ThemeProvider } from './context/ThemeContext';
 
-export const CURRENT_TOUR_VERSION = '1.3.0';
+export const CURRENT_TOUR_VERSION = '1.4.0';
 
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'arena' | 'coach' | 'analytics'>('arena');
@@ -19,11 +19,20 @@ export const AppContent: React.FC = () => {
   const [showDiscoveryBanner, setShowDiscoveryBanner] = useState<boolean>(false);
   const [, startTransition] = useTransition();
 
-  // Version migration: ensures returning users on Vercel get the new v1.3.0 tour while preserving their typing records
+  // Version migration: ensures returning users on Vercel get the new v1.4.0 tour while preserving their typing records
   useEffect(() => {
     try {
-      const storedVersion = localStorage.getItem('typepulse_tour_version');
+      const storedVersion = localStorage.getItem('keywarp_tour_version') || localStorage.getItem('typepulse_tour_version');
       if (storedVersion !== CURRENT_TOUR_VERSION) {
+        localStorage.removeItem('keywarp_discovery_completed');
+        localStorage.removeItem('keywarp_tour_completed');
+        localStorage.removeItem('keywarp_first_next_test_clicked');
+        localStorage.removeItem('keywarp_1_4_0_test_completed');
+        localStorage.removeItem('keywarp_1_4_0_walkthrough_completed');
+        localStorage.removeItem('keywarp_1_4_0_discovery_seen');
+        localStorage.removeItem('keywarp_1_3_0_test_completed');
+        localStorage.removeItem('keywarp_1_3_0_walkthrough_completed');
+        localStorage.removeItem('keywarp_1_3_0_discovery_seen');
         localStorage.removeItem('typepulse_discovery_completed');
         localStorage.removeItem('typepulse_tour_completed');
         localStorage.removeItem('typepulse_first_next_test_clicked');
@@ -36,7 +45,7 @@ export const AppContent: React.FC = () => {
 
   // Load private personal records for this specific device/browser
   const [records, setRecords] = useState<TypingRecord[]>(() => {
-    const saved = localStorage.getItem('typepulse_records');
+    const saved = localStorage.getItem('keywarp_records') || localStorage.getItem('typepulse_records');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -51,12 +60,12 @@ export const AppContent: React.FC = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem('typepulse_records', JSON.stringify(records));
+    localStorage.setItem('keywarp_records', JSON.stringify(records));
   }, [records]);
 
   const handleSessionComplete = (newRecord: TypingRecord) => {
     setRecords(prev => [...prev, newRecord]);
-    const hasSeenDiscovery = localStorage.getItem('typepulse_1_3_0_discovery_seen');
+    const hasSeenDiscovery = localStorage.getItem('keywarp_1_4_0_discovery_seen') || localStorage.getItem('keywarp_1_3_0_discovery_seen') || localStorage.getItem('typepulse_1_3_0_discovery_seen');
     if (!hasSeenDiscovery) {
       setShowDiscoveryBanner(true);
     }
@@ -64,6 +73,17 @@ export const AppContent: React.FC = () => {
 
   const handleResetRecords = () => {
     setRecords([]);
+    localStorage.removeItem('keywarp_records');
+    localStorage.removeItem('keywarp_discovery_completed');
+    localStorage.removeItem('keywarp_tour_completed');
+    localStorage.removeItem('keywarp_first_next_test_clicked');
+    localStorage.removeItem('keywarp_tour_version');
+    localStorage.removeItem('keywarp_1_4_0_test_completed');
+    localStorage.removeItem('keywarp_1_4_0_walkthrough_completed');
+    localStorage.removeItem('keywarp_1_4_0_discovery_seen');
+    localStorage.removeItem('keywarp_1_3_0_test_completed');
+    localStorage.removeItem('keywarp_1_3_0_walkthrough_completed');
+    localStorage.removeItem('keywarp_1_3_0_discovery_seen');
     localStorage.removeItem('typepulse_records');
     localStorage.removeItem('typepulse_discovery_completed');
     localStorage.removeItem('typepulse_tour_completed');
@@ -134,6 +154,8 @@ export const AppContent: React.FC = () => {
               type="button"
               onClick={() => {
                 setShowDiscoveryBanner(false);
+                localStorage.setItem('keywarp_1_4_0_discovery_seen', 'true');
+                localStorage.setItem('keywarp_discovery_completed', 'true');
                 localStorage.setItem('typepulse_1_3_0_discovery_seen', 'true');
                 localStorage.setItem('typepulse_discovery_completed', 'true');
               }}
@@ -145,6 +167,8 @@ export const AppContent: React.FC = () => {
               type="button"
               onClick={() => {
                 setShowDiscoveryBanner(false);
+                localStorage.setItem('keywarp_1_4_0_discovery_seen', 'true');
+                localStorage.setItem('keywarp_discovery_completed', 'true');
                 localStorage.setItem('typepulse_1_3_0_discovery_seen', 'true');
                 localStorage.setItem('typepulse_discovery_completed', 'true');
                 setIsTourOpen(true);
@@ -214,8 +238,8 @@ export const AppContent: React.FC = () => {
       >
         <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-ink-100 font-mono">typepulse</span>
-            <span className="text-[10px] font-mono text-ink-400/60 px-1.5 py-0.5 rounded bg-surface border border-ink-400/15">v1.3.0</span>
+            <span className="font-medium text-ink-100 font-mono">keywarp</span>
+            <span className="text-[10px] font-mono text-ink-400/60 px-1.5 py-0.5 rounded bg-surface border border-ink-400/15">v1.4.0</span>
             <span className="text-ink-400/40">•</span>
             <span className="flex items-center gap-1 text-ink-400/80 font-mono text-[11px]">
               <Command className="w-3 h-3 text-accent" /> tab to restart

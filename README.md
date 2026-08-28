@@ -1,10 +1,10 @@
 <div align="center">
 
-# TypePulse
+# KeyWarp
 
-**A touch-typing speed engine with an adaptive AI coach and real-time telemetry graphs.**
+**A high-velocity touch-typing engine with adaptive AI kinesiology coaching and real-time biomechanical telemetry.**
 
-[![Live Demo](https://img.shields.io/badge/Live_App-typepulseai.vercel.app-e5a93b?style=for-the-badge&logo=vercel&logoColor=white)](https://typepulseai.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live_App-keywarp-e5a93b?style=for-the-badge&logo=vercel&logoColor=white)](https://typepulseai.vercel.app)
 [![AI Engine](https://img.shields.io/badge/AI_Engine-Gemini_3.6_Flash-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)](https://aistudio.google.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
@@ -17,21 +17,21 @@
 <br />
 
 ```
-  ████████╗██╗   ██╗██████╗ ███████╗██████╗ ██╗   ██╗██╗     ███████╗███████╗
-  ╚══██╔══╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║   ██║██║     ██╔════╝██╔════╝
-     ██║    ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║   ██║██║     ███████╗█████╗  
-     ██║     ╚██╔╝  ██╔═══╝ ██╔══╝  ██╔═══╝ ██║   ██║██║     ╚════██║██╔══╝  
-     ██║      ██║   ██║     ███████╗██║     ╚██████╔╝███████╗███████║███████╗
-     ╚═╝      ╚═╝   ╚═╝     ╚══════╝╚═╝      ╚═════╝ ╚══════╝╚══════╝╚══════╝
+  ██╗  ██╗███████╗██╗   ██╗██╗    ██╗ █████╗ ██████╗ ██████╗ 
+  ██║ ██╔╝██╔════╝╚██╗ ██╔╝██║    ██║██╔══██╗██╔══██╗██╔══██╗
+  █████╔╝ █████╗   ╚████╔╝ ██║ █╗ ██║███████║██████╔╝██████╔╝
+  ██╔═██╗ ██╔══╝    ╚██╔╝  ██║███╗██║██╔══██║██╔══██╗██╔═══╝ 
+  ██║  ██╗███████╗   ██║   ╚███╔███╔╝██║  ██║██║  ██║██║     
+  ╚═╝  ╚═╝╚══════╝   ╚═╝    ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     
 ```
 
 </div>
 
 ---
 
-## What is TypePulse?
+## What is KeyWarp?
 
-Most typing trainers only calculate a raw WPM score. TypePulse tracks where your fingers slow down and helps you fix those hesitation points.
+Most typing trainers only calculate a raw WPM score. KeyWarp tracks where your fingers slow down and helps you fix those hesitation points.
 
 While you type, it records your inter-key latency and mistake patterns. It then sends your telemetry to **Gemini 3.6 Flash** to generate short, targeted practice drills for the specific key transitions holding your speed back.
 

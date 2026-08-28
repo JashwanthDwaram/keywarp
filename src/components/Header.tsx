@@ -37,16 +37,16 @@ export const Header: React.FC<HeaderProps> = ({
       }`}
     >
       <div className="max-w-4xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-1.5 sm:gap-2">
-        {/* Monogrammed "ty" Logo & lowercase "typepulse" */}
+        {/* Monogrammed "kw" Logo & lowercase "keywarp" */}
         <div
           className="flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none shrink-0"
           onClick={() => onTabChange('arena')}
         >
           <div className="w-6 h-6 rounded bg-surface border border-accent/40 flex items-center justify-center font-mono text-xs font-bold text-accent tracking-tighter shrink-0">
-            ty
+            kw
           </div>
           <span className="text-xs sm:text-sm font-medium text-ink-100 font-sans tracking-tight hidden sm:inline">
-            typepulse
+            keywarp
           </span>
         </div>
 

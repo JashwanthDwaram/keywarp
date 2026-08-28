@@ -26,7 +26,7 @@ export const SessionHistoryTable: React.FC<SessionHistoryTableProps> = ({ record
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `typepulse_history_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `keywarp_history_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
   };
 

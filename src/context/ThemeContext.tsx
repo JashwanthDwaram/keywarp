@@ -12,7 +12,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themeId, setThemeIdState] = useState<string>(() => {
-    return localStorage.getItem('typepulse_theme') || 'earth-minimal';
+    return localStorage.getItem('keywarp_theme') || localStorage.getItem('typepulse_theme') || 'earth-minimal';
   });
 
   const currentTheme = THEMES[themeId] || THEMES['earth-minimal'];
@@ -20,7 +20,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setThemeId = (id: string) => {
     if (THEMES[id]) {
       setThemeIdState(id);
-      localStorage.setItem('typepulse_theme', id);
+      localStorage.setItem('keywarp_theme', id);
     }
   };
 

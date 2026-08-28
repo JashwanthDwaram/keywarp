@@ -8,7 +8,8 @@ export interface ChallengePayload {
   mode: string;
 }
 
-const WEAK_WORDS_KEY = 'typepulse_weak_words';
+const WEAK_WORDS_KEY = 'keywarp_weak_words';
+const LEGACY_WEAK_WORDS_KEY = 'typepulse_weak_words';
 
 // Create a shareable challenge URL with base64 encoded payload
 export function generateChallengeUrl(text: string, wpm: number, mode: string): string {
@@ -61,7 +62,7 @@ export function recordWeakWord(word: string): void {
 
 export function getWeakWordsList(limit: number = 25): string[] {
   try {
-    const existingStr = localStorage.getItem(WEAK_WORDS_KEY);
+    const existingStr = localStorage.getItem(WEAK_WORDS_KEY) || localStorage.getItem(LEGACY_WEAK_WORDS_KEY);
     if (!existingStr) return [];
     const map: Record<string, number> = JSON.parse(existingStr);
     const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);

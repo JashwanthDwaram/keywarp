@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { TypingRecord, GeminiCoachResponse } from '../types';
 
-export const GEMINI_LOCAL_KEY = 'typepulse_gemini_key';
-export const GEMINI_SWR_KEY = 'typepulse_gemini_swr';
+export const GEMINI_LOCAL_KEY = 'keywarp_gemini_key';
+export const GEMINI_SWR_KEY = 'keywarp_gemini_swr';
 
 export const isMobileClient = (): boolean => {
   if (typeof window !== 'undefined') {
@@ -133,11 +133,11 @@ export async function fetchGeminiCoachInsight(records: TypingRecord[]): Promise<
     } else {
       const errBody = await res.text();
       lastAttemptedError = `Vercel /api/coach HTTP ${res.status}: ${errBody}`;
-      console.warn('[TypePulse]', lastAttemptedError);
+      console.warn('[KeyWarp]', lastAttemptedError);
     }
   } catch (err) {
     lastAttemptedError = `Vercel /api/coach fetch error: ${err instanceof Error ? err.message : String(err)}`;
-    console.warn('[TypePulse]', lastAttemptedError);
+    console.warn('[KeyWarp]', lastAttemptedError);
   }
 
   // Layer 3: Dynamic Procedural Kinesiology Engine (Offline fallback)
@@ -193,7 +193,7 @@ DO NOT mention physical mechanical keyboards, desk posture, home-row 10-finger p
 Instead, focus purely on dual-thumb lateral speed, thumb reach transitions, vowel spacing, touch accuracy, and mobile rhythm cadence.`
       : `PLATFORM CONTEXT: The user is typing on a physical desktop/laptop keyboard with 10-finger touch typing.`;
 
-    const systemPrompt = `You are TypePulse AI, an elite kinesiology and touch-typing performance diagnostic coach.
+    const systemPrompt = `You are KeyWarp AI, an elite kinesiology and touch-typing performance diagnostic coach.
 ${platformInstruction}
 
 Analyze the user's typing telemetry and output a strict JSON object with EXACTLY these fields:

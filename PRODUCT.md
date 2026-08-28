@@ -16,11 +16,11 @@ Students, software developers, and knowledge professionals who want to measure, 
 
 ## Product Purpose
 
-TypePulse is a modern, self-contained typing trainer and analytics platform. It provides instantaneous character-by-character validation, real-time WPM/Accuracy metrics, and longitudinal tracking to help users pinpoint specific finger-reach weaknesses and steadily improve typing velocity.
+KeyWarp is a modern, self-contained typing trainer and analytics platform. It provides instantaneous character-by-character validation, real-time WPM/Accuracy metrics, and longitudinal tracking to help users pinpoint specific finger-reach weaknesses and steadily improve typing velocity.
 
 ## Positioning
 
-Unlike conventional online typing tests that offer fleeting results, TypePulse combines offline-capable real-time typing with AI-native coaching primitives (Thinking states, tool execution telemetry, and human-in-the-loop adaptive drill approval cards) alongside persistent CSV/browser session analytics.
+Unlike conventional online typing tests that offer fleeting results, KeyWarp combines offline-capable real-time typing with AI-native coaching primitives (Thinking states, tool execution telemetry, and human-in-the-loop adaptive drill approval cards) alongside persistent CSV/browser session analytics.
 
 ## Operating Context
 
@@ -38,7 +38,7 @@ Keyboard-driven desktop browser sessions (and desktop Pygame window), rapid iter
 
 ## Brand Commitments
 
-- **Name**: TypePulse
+- **Name**: KeyWarp
 - **Aesthetic**: Modern dark slate palette (`#0B0F19`, `#0F172A`, `#1E293B`) with vibrant Indigo (`#6366F1`), Sky (`#38BDF8`), Emerald (`#10B981`), and Rose (`#F43F5E`) accents.
 - **Typography**: Clean sans-serif (`Inter`) for UI shells, crisp monospace (`Fira Code`, `Consolas`) for typing passage canvases.
 - **UI Kit**: Inspired by BeautifulUI AI-native primitives and Tailwind Dark.

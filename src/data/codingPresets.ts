@@ -1,5 +1,5 @@
 /**
- * TypePulse Specialized Coding and Vocabulary Dictionaries
+ * KeyWarp Specialized Coding and Vocabulary Dictionaries
  * Curated programming languages, frequency tiers, and tech lexicon.
  */
 

@@ -1,5 +1,5 @@
 """
-Main Application Launcher for TypePulse - Typing Speed Test & Analytics Game.
+Main Application Launcher for KeyWarp - Typing Speed Test & Analytics Game.
 CSM216 Project - Event-driven Pygame application with Pandas/Matplotlib analytics.
 """
 
@@ -28,7 +28,7 @@ from ui.screens.history_screen import HistoryScreen
 from ui.screens.analytics_screen import AnalyticsScreen
 
 
-class TypePulseApp:
+class KeyWarpApp:
     def __init__(self):
         pygame.init()
         pygame.display.set_caption(WINDOW_TITLE)
@@ -203,5 +203,5 @@ class TypePulseApp:
 
 
 if __name__ == "__main__":
-    app = TypePulseApp()
+    app = KeyWarpApp()
     app.run()

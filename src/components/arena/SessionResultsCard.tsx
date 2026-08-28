@@ -93,7 +93,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
       return false;
     }
     try {
-      const stored = localStorage.getItem('typepulse_records');
+      const stored = localStorage.getItem('keywarp_records') || localStorage.getItem('typepulse_records');
       if (!stored) return false;
       const recs = JSON.parse(stored);
       if (!Array.isArray(recs)) return false;
@@ -109,7 +109,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
   // Historical average benchmark
   const avgPastWpm = React.useMemo(() => {
     try {
-      const stored = localStorage.getItem('typepulse_records');
+      const stored = localStorage.getItem('keywarp_records') || localStorage.getItem('typepulse_records');
       if (!stored) return null;
       const recs = JSON.parse(stored);
       if (!Array.isArray(recs)) return null;
@@ -125,10 +125,10 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
   // First-time guidance: Pulse-glow the "Next test" button after first test and tour completion
   const shouldGlowNextTest = React.useMemo(() => {
     try {
-      const hasClickedNextBefore = localStorage.getItem('typepulse_first_next_test_clicked');
+      const hasClickedNextBefore = localStorage.getItem('keywarp_first_next_test_clicked') || localStorage.getItem('typepulse_first_next_test_clicked');
       if (hasClickedNextBefore) return false;
-      const tourCompleted = localStorage.getItem('typepulse_tour_completed') || localStorage.getItem('typepulse_discovery_completed');
-      const recs = JSON.parse(localStorage.getItem('typepulse_records') || '[]');
+      const tourCompleted = localStorage.getItem('keywarp_tour_completed') || localStorage.getItem('typepulse_tour_completed') || localStorage.getItem('keywarp_discovery_completed') || localStorage.getItem('typepulse_discovery_completed');
+      const recs = JSON.parse(localStorage.getItem('keywarp_records') || localStorage.getItem('typepulse_records') || '[]');
       return recs.length <= 1 || Boolean(tourCompleted);
     } catch {
       return false;
@@ -137,7 +137,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
 
   const handleNextTestClick = () => {
     try {
-      localStorage.setItem('typepulse_first_next_test_clicked', 'true');
+      localStorage.setItem('keywarp_first_next_test_clicked', 'true');
     } catch {}
     onNextTest();
   };
@@ -201,11 +201,11 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
 
     ctx.fillStyle = '#d85a30';
     ctx.font = 'bold 16px monospace';
-    ctx.fillText('ty', 50, 64);
+    ctx.fillText('kw', 50, 64);
 
     ctx.fillStyle = '#e8e6e1';
     ctx.font = 'bold 20px sans-serif';
-    ctx.fillText('typepulse', 88, 65);
+    ctx.fillText('keywarp', 88, 65);
 
     ctx.fillStyle = '#8a8578';
     ctx.font = '13px monospace';
@@ -284,7 +284,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
     // Footer
     ctx.fillStyle = '#8a8578';
     ctx.font = '11px monospace';
-    ctx.fillText(`typepulse.app • ${new Date().toLocaleDateString()}`, 40, 415);
+    ctx.fillText(`keywarp.app • ${new Date().toLocaleDateString()}`, 40, 415);
 
     canvas.toBlob(async (blob) => {
       if (!blob) return;
@@ -303,7 +303,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `typepulse_${record.netWpm}wpm_${Date.now()}.png`;
+      a.download = `keywarp_${record.netWpm}wpm_${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -682,7 +682,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
             </Button>
           ) : null}
 
-          {onOpenTour && !localStorage.getItem('typepulse_discovery_completed') ? (
+          {onOpenTour && !localStorage.getItem('keywarp_discovery_completed') && !localStorage.getItem('typepulse_discovery_completed') ? (
             <Button
               variant="secondary"
               size="sm"

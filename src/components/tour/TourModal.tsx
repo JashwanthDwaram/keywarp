@@ -159,9 +159,12 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
     try {
       soundEngine.playStreakChime(1);
     } catch {}
+    localStorage.setItem('keywarp_discovery_completed', 'true');
+    localStorage.setItem('keywarp_tour_completed', 'true');
+    localStorage.setItem('keywarp_tour_version', '1.4.0');
     localStorage.setItem('typepulse_discovery_completed', 'true');
     localStorage.setItem('typepulse_tour_completed', 'true');
-    localStorage.setItem('typepulse_tour_version', '1.3.0');
+    localStorage.setItem('typepulse_tour_version', '1.4.0');
     onTabChange('arena');
     setCurrentStep(0);
     onClose();

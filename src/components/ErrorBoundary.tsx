@@ -23,12 +23,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('TypePulse Uncaught Render Error:', error, errorInfo);
+    console.error('KeyWarp Uncaught Render Error:', error, errorInfo);
     this.setState({ errorInfo });
   }
 
   private handleReset = () => {
     try {
+      localStorage.removeItem('keywarp_discovery_completed');
       localStorage.removeItem('typepulse_discovery_completed');
     } catch {}
     this.setState({ hasError: false, error: null, errorInfo: null });

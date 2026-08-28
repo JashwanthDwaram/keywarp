@@ -30,11 +30,11 @@ interface PreviousAttempt {
 }
 
 const STORAGE_KEYS = {
-  MODE: 'typepulse_user_mode',
-  DIFFICULTY: 'typepulse_user_difficulty',
-  SPRINT_DURATION: 'typepulse_user_sprint_duration',
-  WORD_COUNT: 'typepulse_user_word_count',
-  SOUND_PROFILE: 'typepulse_user_sound_profile'
+  MODE: 'keywarp_user_mode',
+  DIFFICULTY: 'keywarp_user_difficulty',
+  SPRINT_DURATION: 'keywarp_user_sprint_duration',
+  WORD_COUNT: 'keywarp_user_word_count',
+  SOUND_PROFILE: 'keywarp_user_sound_profile'
 };
 
 // Device detection helper: Words & 10-words for Mobile, Passage for PC/Desktop
@@ -199,10 +199,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const wordsContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Version-scoped calibration flag: shows once for any user on 1.3.0, then permanently retires
+  // Version-scoped calibration flag: shows once for any user on 1.4.0, then permanently retires
   const [hasDoneVersionTest, setHasDoneVersionTest] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('typepulse_1_3_0_test_completed') === 'true';
+      return (localStorage.getItem('keywarp_1_4_0_test_completed') || localStorage.getItem('keywarp_1_3_0_test_completed') || localStorage.getItem('typepulse_1_3_0_test_completed')) === 'true';
     } catch {
       return false;
     }
@@ -547,7 +547,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     };
 
     try {
-      localStorage.setItem('typepulse_1_3_0_test_completed', 'true');
+      localStorage.setItem('keywarp_1_4_0_test_completed', 'true');
     } catch {}
     setHasDoneVersionTest(true);
     setLastCompletedRecord(newRecord);
