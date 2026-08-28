@@ -24,74 +24,92 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
   const [currentStep, setCurrentStep] = useState(0);
   const activeElementRef = useRef<HTMLElement | null>(null);
 
-  const steps: TourStep[] = [
-    {
-      tab: 'arena',
-      targetId: '#session-results-card',
-      icon: <Zap className="w-4 h-4 text-accent" />,
-      title: 'Session Summary & Velocity Waveform',
-      badge: 'Waveform',
-      stepLabel: 'Step 1 of 6',
-      description: 'Your dual-line cadence waveform graphs second-by-second pacing, Net WPM, raw gross velocity, and rhythm acceleration.',
-      actionHint: 'Hover along the waveform line to inspect second-by-second pacing.',
-      nextLabel: 'Next: AI Coach Diagnostics'
-    },
-    {
-      tab: 'coach',
-      targetId: '#coach-diagnostics-card',
-      icon: <Sparkles className="w-4 h-4 text-accent" />,
-      title: 'AI Kinesiology Coach',
-      badge: 'Gemini AI',
-      stepLabel: 'Step 2 of 6',
-      description: 'Gemini analyzes your microsecond key intervals, diagnoses weak transitions, and generates tailored 45-second remedial workouts.',
-      actionHint: 'Click "Launch Module" on any drill to send custom exercises directly to the Arena.',
-      nextLabel: 'Next: Rhythm & Velocity Horizon'
-    },
-    {
-      tab: 'analytics',
-      targetId: '#progression-chart-card',
-      icon: <Activity className="w-4 h-4 text-accent" />,
-      title: 'Rhythm & Velocity Horizon',
-      badge: 'Horizon',
-      stepLabel: 'Step 3 of 6',
-      description: 'Track your 14-session speed trajectory, consistency flow score, and peak bursts. Switch between Rhythm, Latency, and Hand Balance.',
-      actionHint: 'Toggle Rhythm, Latency, and Balance tabs to view physical workload distribution.',
-      nextLabel: 'Next: Key Heatmap'
-    },
-    {
-      tab: 'analytics',
-      targetId: '#analytics-heatmap-card',
-      icon: <BarChart3 className="w-4 h-4 text-accent" />,
-      title: 'Biomechanical Key Heatmap',
-      badge: 'Biomechanics',
-      stepLabel: 'Step 4 of 6',
-      description: 'Interactive QWERTY reach mapping: 🟢 Green for fluent speed, 🟡 amber for friction, and 🔴 red for finger error bottlenecks.',
-      actionHint: 'Hover over any key to inspect assigned anatomical finger reach data.',
-      nextLabel: 'Next: Arena Shortcuts'
-    },
-    {
-      tab: 'arena',
-      targetId: '#arena-ribbon-card',
-      icon: <Keyboard className="w-4 h-4 text-accent" />,
-      title: 'Power Shortcuts & Coding Modes',
-      badge: 'Shortcuts',
-      stepLabel: 'Step 5 of 6',
-      description: 'Press Tab to restart instantly, Esc for Zen mode, and switch ribbon to "code" for real TypeScript, Python, Rust, and SQL presets.',
-      actionHint: 'Click the sound pill on the ribbon to customize mechanical switch clicks and flow soundscapes.',
-      nextLabel: 'Next: Replay Guide Anytime'
-    },
-    {
-      tab: 'arena',
-      targetId: '#header-tour-button',
-      icon: <Compass className="w-4 h-4 text-accent" />,
-      title: 'Relaunch the Tour Anytime',
-      badge: 'Revisit',
-      stepLabel: 'Step 6 of 6',
-      description: 'You can replay this interactive walkthrough anytime by clicking the glowing 🧭 Tour button in the top navigation header.',
-      actionHint: 'Click "Start Typing (Enter)" or press Esc to return to the arena and begin your first session!',
-      nextLabel: 'Start Typing'
+  // First run check: Step 6 (pointing to the glowing Tour button) only appears on initial onboarding
+  const isFirstTourRun = useMemo(() => {
+    try {
+      const completed = localStorage.getItem('keywarp_tour_completed') || localStorage.getItem('typepulse_tour_completed');
+      return !completed;
+    } catch {
+      return false;
     }
-  ];
+  }, [isOpen]);
+
+  const steps: TourStep[] = useMemo(() => {
+    const totalSteps = isFirstTourRun ? 6 : 5;
+    const baseSteps: TourStep[] = [
+      {
+        tab: 'arena',
+        targetId: '#session-results-card',
+        icon: <Zap className="w-4 h-4 text-accent" />,
+        title: 'Session Summary & Velocity Waveform',
+        badge: 'Waveform',
+        stepLabel: `Step 1 of ${totalSteps}`,
+        description: 'Your dual-line cadence waveform graphs second-by-second pacing, Net WPM, raw gross velocity, and rhythm acceleration.',
+        actionHint: 'Hover along the waveform line to inspect second-by-second pacing.',
+        nextLabel: 'Next: AI Coach Diagnostics'
+      },
+      {
+        tab: 'coach',
+        targetId: '#coach-diagnostics-card',
+        icon: <Sparkles className="w-4 h-4 text-accent" />,
+        title: 'AI Kinesiology Coach',
+        badge: 'Gemini AI',
+        stepLabel: `Step 2 of ${totalSteps}`,
+        description: 'Gemini analyzes your microsecond key intervals, diagnoses weak transitions, and generates tailored 45-second remedial workouts.',
+        actionHint: 'Click "Launch Module" on any drill to send custom exercises directly to the Arena.',
+        nextLabel: 'Next: Rhythm & Velocity Horizon'
+      },
+      {
+        tab: 'analytics',
+        targetId: '#progression-chart-card',
+        icon: <Activity className="w-4 h-4 text-accent" />,
+        title: 'Rhythm & Velocity Horizon',
+        badge: 'Horizon',
+        stepLabel: `Step 3 of ${totalSteps}`,
+        description: 'Track your 14-session speed trajectory, consistency flow score, and peak bursts. Switch between Rhythm, Latency, and Hand Balance.',
+        actionHint: 'Toggle Rhythm, Latency, and Balance tabs to view physical workload distribution.',
+        nextLabel: 'Next: Key Heatmap'
+      },
+      {
+        tab: 'analytics',
+        targetId: '#analytics-heatmap-card',
+        icon: <BarChart3 className="w-4 h-4 text-accent" />,
+        title: 'Biomechanical Key Heatmap',
+        badge: 'Biomechanics',
+        stepLabel: `Step 4 of ${totalSteps}`,
+        description: 'Interactive QWERTY reach mapping: 🟢 Green for fluent speed, 🟡 amber for friction, and 🔴 red for finger error bottlenecks.',
+        actionHint: 'Hover over any key to inspect assigned anatomical finger reach data.',
+        nextLabel: 'Next: Arena Shortcuts'
+      },
+      {
+        tab: 'arena',
+        targetId: '#arena-ribbon-card',
+        icon: <Keyboard className="w-4 h-4 text-accent" />,
+        title: 'Power Shortcuts & Coding Modes',
+        badge: 'Shortcuts',
+        stepLabel: `Step 5 of ${totalSteps}`,
+        description: 'Press Tab to restart instantly, Esc for Zen mode, and switch ribbon to "code" for real TypeScript, Python, Rust, and SQL presets.',
+        actionHint: 'Click the sound pill on the ribbon to customize mechanical switch clicks and flow soundscapes.',
+        nextLabel: isFirstTourRun ? 'Next: Replay Guide Anytime' : 'Start Typing'
+      }
+    ];
+
+    if (isFirstTourRun) {
+      baseSteps.push({
+        tab: 'arena',
+        targetId: '#header-tour-button',
+        icon: <Compass className="w-4 h-4 text-accent" />,
+        title: 'Relaunch the Tour Anytime',
+        badge: 'Revisit',
+        stepLabel: 'Step 6 of 6',
+        description: 'You can replay this interactive walkthrough anytime by clicking the glowing 🧭 Tour button in the top navigation header.',
+        actionHint: 'Click "Start Typing (Enter)" or press Esc to return to the arena and begin your first session!',
+        nextLabel: 'Start Typing'
+      });
+    }
+
+    return baseSteps;
+  }, [isFirstTourRun]);
 
   // Always reset to the very first card (Step 1) whenever the tour is opened
   useEffect(() => {
@@ -130,16 +148,16 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
         }
       }
     }, 80);
-  }, [currentStep, isOpen, onTabChange]);
+  }, [currentStep, isOpen, onTabChange, steps]);
 
   useEffect(() => {
     updateSpotlight();
     // Play preview mechanical switch sound on shortcuts step, or streak chime on final step
-    if (isOpen && currentStep === 4) {
+    if (isOpen && currentStep === 4 && isFirstTourRun) {
       try {
         soundEngine.playKeyClick(' ', false);
       } catch {}
-    } else if (isOpen && currentStep === 5) {
+    } else if (isOpen && currentStep === steps.length - 1) {
       try {
         soundEngine.playStreakChime(1);
       } catch {}
@@ -149,7 +167,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
         activeElementRef.current.classList.remove('tour-spotlight-active');
       }
     };
-  }, [updateSpotlight, isOpen, currentStep]);
+  }, [updateSpotlight, isOpen, currentStep, steps.length, isFirstTourRun]);
 
   const handleNext = () => {
     try {
