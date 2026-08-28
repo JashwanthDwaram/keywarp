@@ -199,10 +199,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const wordsContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Version-scoped calibration flag: shows once for any user on 1.4.1, then permanently retires
+  // Version-scoped calibration flag: shows once for any user on 1.4.2, then permanently retires
   const [hasDoneVersionTest, setHasDoneVersionTest] = useState<boolean>(() => {
     try {
-      return (localStorage.getItem('keywarp_1_4_1_test_completed') || localStorage.getItem('keywarp_1_4_0_test_completed') || localStorage.getItem('typepulse_1_3_0_test_completed')) === 'true';
+      return (localStorage.getItem('keywarp_1_4_2_test_completed') || localStorage.getItem('keywarp_1_4_1_test_completed') || localStorage.getItem('typepulse_1_3_0_test_completed')) === 'true';
     } catch {
       return false;
     }
@@ -547,7 +547,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     };
 
     try {
-      localStorage.setItem('keywarp_1_4_1_test_completed', 'true');
+      localStorage.setItem('keywarp_1_4_2_test_completed', 'true');
     } catch {}
     setHasDoneVersionTest(true);
     setLastCompletedRecord(newRecord);

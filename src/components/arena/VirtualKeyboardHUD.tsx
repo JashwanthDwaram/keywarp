@@ -3,6 +3,7 @@ import React from 'react';
 export interface VirtualKeyboardHUDProps {
   activeKey?: string;
   expectedKey?: string;
+  lastPressedKey?: string;
   lastMistakeKey?: string;
   mistypedKeysMap?: Record<string, number>;
   className?: string;
@@ -11,6 +12,7 @@ export interface VirtualKeyboardHUDProps {
 export const VirtualKeyboardHUD: React.FC<VirtualKeyboardHUDProps> = ({
   activeKey,
   expectedKey,
+  lastPressedKey,
   lastMistakeKey,
   mistypedKeysMap,
   className = ''
@@ -21,8 +23,8 @@ export const VirtualKeyboardHUD: React.FC<VirtualKeyboardHUDProps> = ({
     return k.toLowerCase();
   };
 
-  const currActive = norm(activeKey);
-  const currExpected = norm(expectedKey);
+  const currActive = norm(lastPressedKey || activeKey);
+  const currExpected = norm(expectedKey || activeKey);
   const currMistake = norm(lastMistakeKey);
 
   const getKeyClasses = (keyChar: string) => {
