@@ -107,6 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Guide / Tour Button */}
           {onOpenTour && (
             <button
+              id="header-tour-button"
               type="button"
               onClick={onOpenTour}
               className="flex items-center gap-1 px-2 py-1 rounded bg-surface border border-ink-400/15 text-xs text-ink-400 hover:text-accent hover:border-accent/40 transition-colors cursor-pointer"

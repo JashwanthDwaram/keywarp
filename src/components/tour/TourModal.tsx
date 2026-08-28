@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Sparkles, Zap, BarChart3, Activity, X, ArrowRight, ArrowLeft, Check, Keyboard } from 'lucide-react';
+import { Sparkles, Zap, BarChart3, Activity, X, ArrowRight, ArrowLeft, Check, Keyboard, Compass } from 'lucide-react';
 import { soundEngine } from '../../utils/soundEngine';
 
 export interface TourModalProps {
@@ -31,7 +31,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
       icon: <Zap className="w-4 h-4 text-accent" />,
       title: 'Session Summary & Velocity Waveform',
       badge: 'Waveform',
-      stepLabel: 'Step 1 of 5',
+      stepLabel: 'Step 1 of 6',
       description: 'Your dual-line cadence waveform graphs second-by-second pacing, Net WPM, raw gross velocity, and rhythm acceleration.',
       actionHint: 'Hover along the waveform line to inspect second-by-second pacing.',
       nextLabel: 'Next: AI Coach Diagnostics'
@@ -42,7 +42,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
       icon: <Sparkles className="w-4 h-4 text-accent" />,
       title: 'AI Kinesiology Coach',
       badge: 'Gemini AI',
-      stepLabel: 'Step 2 of 5',
+      stepLabel: 'Step 2 of 6',
       description: 'Gemini analyzes your microsecond key intervals, diagnoses weak transitions, and generates tailored 45-second remedial workouts.',
       actionHint: 'Click "Launch Module" on any drill to send custom exercises directly to the Arena.',
       nextLabel: 'Next: Rhythm & Velocity Horizon'
@@ -53,7 +53,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
       icon: <Activity className="w-4 h-4 text-accent" />,
       title: 'Rhythm & Velocity Horizon',
       badge: 'Horizon',
-      stepLabel: 'Step 3 of 5',
+      stepLabel: 'Step 3 of 6',
       description: 'Track your 14-session speed trajectory, consistency flow score, and peak bursts. Switch between Rhythm, Latency, and Hand Balance.',
       actionHint: 'Toggle Rhythm, Latency, and Balance tabs to view physical workload distribution.',
       nextLabel: 'Next: Key Heatmap'
@@ -64,7 +64,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
       icon: <BarChart3 className="w-4 h-4 text-accent" />,
       title: 'Biomechanical Key Heatmap',
       badge: 'Biomechanics',
-      stepLabel: 'Step 4 of 5',
+      stepLabel: 'Step 4 of 6',
       description: 'Interactive QWERTY reach mapping: 🟢 Green for fluent speed, 🟡 amber for friction, and 🔴 red for finger error bottlenecks.',
       actionHint: 'Hover over any key to inspect assigned anatomical finger reach data.',
       nextLabel: 'Next: Arena Shortcuts'
@@ -75,9 +75,20 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
       icon: <Keyboard className="w-4 h-4 text-accent" />,
       title: 'Power Shortcuts & Coding Modes',
       badge: 'Shortcuts',
-      stepLabel: 'Step 5 of 5',
+      stepLabel: 'Step 5 of 6',
       description: 'Press Tab to restart instantly, Esc for Zen mode, and switch ribbon to "code" for real TypeScript, Python, Rust, and SQL presets.',
       actionHint: 'Click the sound pill on the ribbon to customize mechanical switch clicks and flow soundscapes.',
+      nextLabel: 'Next: Replay Guide Anytime'
+    },
+    {
+      tab: 'arena',
+      targetId: '#header-tour-button',
+      icon: <Compass className="w-4 h-4 text-accent" />,
+      title: 'Relaunch the Tour Anytime',
+      badge: 'Revisit',
+      stepLabel: 'Step 6 of 6',
+      description: 'You can replay this interactive walkthrough anytime by clicking the glowing 🧭 Tour button in the top navigation header.',
+      actionHint: 'Click "Start Typing (Enter)" or press Esc to return to the arena and begin your first session!',
       nextLabel: 'Start Typing'
     }
   ];
@@ -111,18 +122,26 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
         target.classList.add('tour-spotlight-active');
         activeElementRef.current = target;
 
-        // Scroll target into view nicely
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Scroll target into view nicely (top of page for header tour button)
+        if (step.targetId === '#header-tour-button') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
     }, 80);
   }, [currentStep, isOpen, onTabChange]);
 
   useEffect(() => {
     updateSpotlight();
-    // Play preview mechanical switch sound when reaching shortcuts/sound step
+    // Play preview mechanical switch sound on shortcuts step, or streak chime on final step
     if (isOpen && currentStep === 4) {
       try {
         soundEngine.playKeyClick(' ', false);
+      } catch {}
+    } else if (isOpen && currentStep === 5) {
+      try {
+        soundEngine.playStreakChime(1);
       } catch {}
     }
     return () => {
@@ -161,10 +180,10 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
     } catch {}
     localStorage.setItem('keywarp_discovery_completed', 'true');
     localStorage.setItem('keywarp_tour_completed', 'true');
-    localStorage.setItem('keywarp_tour_version', '1.4.0');
+    localStorage.setItem('keywarp_tour_version', '1.4.1');
     localStorage.setItem('typepulse_discovery_completed', 'true');
     localStorage.setItem('typepulse_tour_completed', 'true');
-    localStorage.setItem('typepulse_tour_version', '1.4.0');
+    localStorage.setItem('typepulse_tour_version', '1.4.1');
     onTabChange('arena');
     setCurrentStep(0);
     onClose();
