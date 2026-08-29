@@ -1,5 +1,5 @@
 /**
- * Procedural Web Audio Synthesizer for TypePulse
+ * Procedural Web Audio Synthesizer for KeyWarp
  * Generates tactile mechanical switch acoustics and real-time generative flow soundscapes
  * with ZERO external audio files or network requests.
  */

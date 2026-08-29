@@ -1,4 +1,4 @@
-// Procedural Dynamic Sentence & Passage Generator for TypePulse
+// Procedural Dynamic Sentence & Passage Generator for KeyWarp
 
 const NOUNS_EASY = [
   "dog", "cat", "bird", "tree", "river", "mountain", "sun", "moon", "star", "flower",

@@ -1,5 +1,5 @@
 /**
- * TypePulse Typing Mathematics and Metric Utilities
+ * KeyWarp Typing Mathematics and Metric Utilities
  * Implements standard touch-typing formulas with zero distortion and stabilized live HUD metrics.
  */
 

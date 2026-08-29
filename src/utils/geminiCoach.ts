@@ -365,8 +365,8 @@ export function generateProceduralHeuristicInsight(records: TypingRecord[]): Gem
     return {
       isLiveGemini: false,
       executiveInsight: isMobile
-        ? `Welcome to TypePulse Mobile. Complete your first test in the Arena to calibrate dual-thumb rhythm and touch precision.`
-        : `Welcome to TypePulse. Complete your first test in the Typing Arena to record real keystroke telemetry and unlock personalized neuromuscular coaching drills.`,
+        ? `Welcome to KeyWarp Mobile. Complete your first test in the Arena to calibrate dual-thumb rhythm and touch precision.`
+        : `Welcome to KeyWarp. Complete your first test in the Typing Arena to record real keystroke telemetry and unlock personalized neuromuscular coaching drills.`,
       entropyDiagnosis: `Telemetry standby: Awaiting your initial keystroke latency samples.`,
       ngramClusterAnalysis: `No mistake clusters recorded yet on this device.`,
       estimatedWpmGain: 5.0,
