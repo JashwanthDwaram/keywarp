@@ -9,43 +9,42 @@ import { AICoachLab } from './components/coach/AICoachLab';
 import { AnalyticsHub } from './components/analytics/AnalyticsHub';
 import { ShaderBackground } from './components/ShaderBackground';
 import { TourModal } from './components/tour/TourModal';
+import { CreditsModal } from './components/CreditsModal';
 import { ThemeProvider } from './context/ThemeContext';
 import { trackTestCompleted, trackTabChange, trackCoachDrillApplied } from './utils/telemetry';
 
-export const CURRENT_TOUR_VERSION = '1.4.3';
+export const CURRENT_TOUR_VERSION = '1.4.5';
 
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'arena' | 'coach' | 'analytics'>('arena');
   const [isZenActive, setIsZenActive] = useState<boolean>(false);
   const [customDrillText, setCustomDrillText] = useState<string | null>(null);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
+  const [isCreditsOpen, setIsCreditsOpen] = useState<boolean>(false);
   const [showDiscoveryBanner, setShowDiscoveryBanner] = useState<boolean>(false);
+  const [isCookieMode, setIsCookieMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('keywarp_cookie_mode') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [, startTransition] = useTransition();
 
-  // Version migration: ensures returning users on Vercel get the new v1.4.3 tour while preserving their typing records
+  const handleToggleCookieMode = useCallback(() => {
+    setIsCookieMode(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('keywarp_cookie_mode', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  // Sync version without resetting existing user completion flags
   useEffect(() => {
     try {
-      const storedVersion = localStorage.getItem('keywarp_tour_version') || localStorage.getItem('typepulse_tour_version');
-      if (storedVersion !== CURRENT_TOUR_VERSION) {
-        localStorage.removeItem('keywarp_discovery_completed');
-        localStorage.removeItem('keywarp_tour_completed');
-        localStorage.removeItem('keywarp_first_next_test_clicked');
-        localStorage.removeItem('keywarp_1_4_3_test_completed');
-        localStorage.removeItem('keywarp_1_4_3_walkthrough_completed');
-        localStorage.removeItem('keywarp_1_4_3_discovery_seen');
-        localStorage.removeItem('keywarp_1_4_2_test_completed');
-        localStorage.removeItem('keywarp_1_4_2_walkthrough_completed');
-        localStorage.removeItem('keywarp_1_4_2_discovery_seen');
-        localStorage.removeItem('keywarp_1_4_1_test_completed');
-        localStorage.removeItem('keywarp_1_4_1_walkthrough_completed');
-        localStorage.removeItem('keywarp_1_4_1_discovery_seen');
-        localStorage.removeItem('typepulse_discovery_completed');
-        localStorage.removeItem('typepulse_tour_completed');
-        localStorage.removeItem('typepulse_first_next_test_clicked');
-        localStorage.removeItem('typepulse_1_3_0_test_completed');
-        localStorage.removeItem('typepulse_1_3_0_walkthrough_completed');
-        localStorage.removeItem('typepulse_1_3_0_discovery_seen');
-      }
+      localStorage.setItem('keywarp_tour_version', CURRENT_TOUR_VERSION);
     } catch {}
   }, []);
 
@@ -80,33 +79,28 @@ export const AppContent: React.FC = () => {
       durationSeconds: newRecord.timeSeconds,
       isDisqualified: newRecord.isDisqualified
     });
-    const hasSeenDiscovery = localStorage.getItem('keywarp_1_4_3_discovery_seen') || localStorage.getItem('keywarp_1_4_2_discovery_seen') || localStorage.getItem('typepulse_1_3_0_discovery_seen');
-    if (!hasSeenDiscovery) {
+
+    // Only display first-test discovery invitation if user has 0 prior sessions and has never seen or completed the tour
+    const hasSeenDiscovery =
+      localStorage.getItem('keywarp_discovery_seen') === 'true' ||
+      localStorage.getItem('keywarp_discovery_completed') === 'true' ||
+      localStorage.getItem('keywarp_tour_completed') === 'true';
+
+    if (!hasSeenDiscovery && records.length === 0) {
       setShowDiscoveryBanner(true);
     }
   };
 
   const handleResetRecords = () => {
     setRecords([]);
-    localStorage.removeItem('keywarp_records');
-    localStorage.removeItem('keywarp_discovery_completed');
-    localStorage.removeItem('keywarp_tour_completed');
-    localStorage.removeItem('keywarp_first_next_test_clicked');
-    localStorage.removeItem('keywarp_tour_version');
-    localStorage.removeItem('keywarp_1_4_3_test_completed');
-    localStorage.removeItem('keywarp_1_4_3_walkthrough_completed');
-    localStorage.removeItem('keywarp_1_4_3_discovery_seen');
-    localStorage.removeItem('keywarp_1_4_2_test_completed');
-    localStorage.removeItem('keywarp_1_4_2_walkthrough_completed');
-    localStorage.removeItem('keywarp_1_4_2_discovery_seen');
-    localStorage.removeItem('typepulse_records');
-    localStorage.removeItem('typepulse_discovery_completed');
-    localStorage.removeItem('typepulse_tour_completed');
-    localStorage.removeItem('typepulse_first_next_test_clicked');
-    localStorage.removeItem('typepulse_tour_version');
-    localStorage.removeItem('typepulse_1_3_0_test_completed');
-    localStorage.removeItem('typepulse_1_3_0_walkthrough_completed');
-    localStorage.removeItem('typepulse_1_3_0_discovery_seen');
+    try {
+      localStorage.removeItem('keywarp_records');
+      localStorage.removeItem('keywarp_discovery_completed');
+      localStorage.removeItem('keywarp_tour_completed');
+      localStorage.removeItem('keywarp_first_next_test_clicked');
+      localStorage.removeItem('keywarp_discovery_seen');
+      localStorage.removeItem('typepulse_records');
+    } catch {}
   };
 
   const handleImportRecords = (imported: TypingRecord[]) => {
@@ -140,11 +134,18 @@ export const AppContent: React.FC = () => {
     <div className="min-h-screen bg-bg text-ink-100 flex flex-col font-sans selection:bg-accent/25 selection:text-ink-100 relative">
       <ShaderBackground />
 
-      {/* Interactive First-Time & On-Demand Tab-Navigating Tour */}
+      {/* Interactive Tour Modal */}
       <TourModal
         isOpen={isTourOpen}
         onClose={() => setIsTourOpen(false)}
         onTabChange={handleTabChange}
+      />
+
+      {/* Interactive Developer Credits & Project Modal */}
+      <CreditsModal
+        isOpen={isCreditsOpen}
+        onClose={() => setIsCreditsOpen(false)}
+        isCookieMode={isCookieMode}
       />
 
       {/* Post-First-Session Graduation Discovery Toast (Mobile & Desktop Responsive) */}
@@ -171,10 +172,8 @@ export const AppContent: React.FC = () => {
               type="button"
               onClick={() => {
                 setShowDiscoveryBanner(false);
-                localStorage.setItem('keywarp_1_4_3_discovery_seen', 'true');
+                localStorage.setItem('keywarp_discovery_seen', 'true');
                 localStorage.setItem('keywarp_discovery_completed', 'true');
-                localStorage.setItem('typepulse_1_3_0_discovery_seen', 'true');
-                localStorage.setItem('typepulse_discovery_completed', 'true');
               }}
               className="px-2.5 py-1.5 rounded-md text-xs font-medium text-ink-400 hover:text-ink-100 hover:bg-bg/60 transition-colors cursor-pointer"
             >
@@ -184,10 +183,8 @@ export const AppContent: React.FC = () => {
               type="button"
               onClick={() => {
                 setShowDiscoveryBanner(false);
-                localStorage.setItem('keywarp_1_4_3_discovery_seen', 'true');
+                localStorage.setItem('keywarp_discovery_seen', 'true');
                 localStorage.setItem('keywarp_discovery_completed', 'true');
-                localStorage.setItem('typepulse_1_3_0_discovery_seen', 'true');
-                localStorage.setItem('typepulse_discovery_completed', 'true');
                 setIsTourOpen(true);
               }}
               className="px-3.5 py-1.5 rounded-md bg-accent text-accent-contrast text-xs font-semibold hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center gap-1 cursor-pointer whitespace-nowrap"
@@ -213,6 +210,8 @@ export const AppContent: React.FC = () => {
         onTabChange={handleTabChange}
         isZenActive={isZenActive}
         onOpenTour={() => setIsTourOpen(true)}
+        isCookieMode={isCookieMode}
+        onToggleCookieMode={handleToggleCookieMode}
       />
 
       {/* Main Content Arena: Persistent Tab States (Zero Reset on Switching) */}
@@ -228,6 +227,8 @@ export const AppContent: React.FC = () => {
             onZenModeChange={setIsZenActive}
             customDrillText={customDrillText}
             onClearCustomDrill={handleClearCustomDrill}
+            isCookieMode={isCookieMode}
+            onToggleCookieMode={handleToggleCookieMode}
           />
         </div>
 
@@ -256,7 +257,7 @@ export const AppContent: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <span className="font-medium text-ink-100 font-mono">keywarp</span>
-            <span className="text-[10px] font-mono text-ink-400/60 px-1.5 py-0.5 rounded bg-surface border border-ink-400/15">v1.4.3</span>
+            <span className="text-[10px] font-mono text-ink-400/60 px-1.5 py-0.5 rounded bg-surface border border-ink-400/15">v1.4.5</span>
             <span className="text-ink-400/40">•</span>
             <span className="flex items-center gap-1 text-ink-400/80 font-mono text-[11px]">
               <Command className="w-3 h-3 text-accent" /> tab to restart
@@ -264,16 +265,16 @@ export const AppContent: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 text-[11px]">
-            <a
-              href="https://github.com/JashwanthDwaram/typepulse"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => setIsCreditsOpen(true)}
               className="flex items-center gap-1.5 text-ink-400 hover:text-accent transition-colors group cursor-pointer"
+              title="View Creator Credits & Open Source Details"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-correct group-hover:bg-accent transition-colors inline-block" />
-              <span>crafted by <strong className="font-medium text-ink-100/90 group-hover:text-accent">Jashwanth Dwaram</strong></span>
-              <span className="text-ink-400/60 group-hover:text-accent font-mono">↗</span>
-            </a>
+              <span className={`w-1.5 h-1.5 rounded-full ${isCookieMode ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse' : 'bg-correct shadow-[0_0_6px_rgba(16,185,129,0.5)]'} inline-block`} />
+              <span>{isCookieMode ? 'baked with love :)' : 'made with love :)'}</span>
+              <span className="text-ink-400/60 group-hover:text-accent font-mono text-[10px] px-1 py-0.2 rounded bg-surface border border-ink-400/15">credits ⓘ</span>
+            </button>
           </div>
         </div>
       </footer>

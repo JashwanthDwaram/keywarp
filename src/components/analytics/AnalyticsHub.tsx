@@ -38,10 +38,9 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
         avgAcc: 0,
         totalWords: 0,
         totalMins: 0,
-        trendLabel: '0 wpm',
-        trendSubtitle: '0m practice time',
-        isPositive: true,
-        isNeutral: true
+        trendValue: '0/5 tests',
+        trendSubtitle: 'Calibrating baseline',
+        deltaBadge: undefined
       };
     }
 
@@ -52,30 +51,25 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
     const totalSecs = records.reduce((acc, r) => acc + r.timeSeconds, 0);
     const totalMins = Math.round((totalSecs / 60) * 10) / 10;
 
-    let trendLabel = 'Calibrating';
-    let trendSubtitle = `${count}/5 calibration tests`;
-    let isPositive = true;
-    let isNeutral = true;
+    let trendValue = count < 5 ? `${count}/5 tests` : '±0.0 wpm';
+    let trendSubtitle = count < 5 ? 'Calibrating baseline' : `${totalMins}m practice time`;
+    let deltaBadge: { value: string; isPositive?: boolean; isNeutral?: boolean } | undefined = undefined;
 
     if (count >= 5) {
       const first3Avg = records.slice(0, 3).reduce((acc, r) => acc + r.netWpm, 0) / 3;
       const last3Avg = records.slice(-3).reduce((acc, r) => acc + r.netWpm, 0) / 3;
       const diff = Math.round((last3Avg - first3Avg) * 10) / 10;
+      trendSubtitle = `${totalMins}m practice time`;
 
       if (Math.abs(diff) <= 2.5) {
-        trendLabel = `Steady (±${Math.abs(diff)} wpm)`;
-        trendSubtitle = `${totalMins}m practice time`;
-        isNeutral = true;
+        trendValue = diff > 0 ? `+${diff} wpm` : diff < 0 ? `${diff} wpm` : '±0.0 wpm';
+        deltaBadge = { value: 'Steady', isNeutral: true };
       } else if (diff > 2.5) {
-        trendLabel = `+${diff} wpm`;
-        trendSubtitle = 'Pace accelerating';
-        isPositive = true;
-        isNeutral = false;
+        trendValue = `+${diff} wpm`;
+        deltaBadge = { value: 'Accelerating', isPositive: true, isNeutral: false };
       } else {
-        trendLabel = `${diff} wpm`;
-        trendSubtitle = 'Pace variance';
-        isPositive = false;
-        isNeutral = false;
+        trendValue = `${diff} wpm`;
+        deltaBadge = { value: 'Variance', isPositive: false, isNeutral: false };
       }
     }
 
@@ -86,10 +80,9 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
       avgAcc,
       totalWords,
       totalMins,
-      trendLabel,
+      trendValue,
       trendSubtitle,
-      isPositive,
-      isNeutral
+      deltaBadge
     };
   }, [records]);
 
@@ -237,13 +230,9 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
         />
         <MetricCard
           title="Velocity trend"
-          value={stats.totalSessions < 5 ? `${stats.totalSessions}/5 tests` : stats.trendLabel}
+          value={stats.trendValue}
           subtitle={stats.trendSubtitle}
-          delta={stats.totalSessions >= 5 ? {
-            value: stats.isPositive ? 'Accelerating' : stats.isNeutral ? 'Steady' : 'Variance',
-            isPositive: stats.isPositive,
-            isNeutral: stats.isNeutral
-          } : undefined}
+          delta={stats.deltaBadge}
           icon={<TrendingUp className="w-4 h-4" aria-hidden="true" />}
         />
       </div>

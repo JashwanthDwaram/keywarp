@@ -9,6 +9,7 @@ export interface TelemetryHUDProps {
   mode: string;
   sprintRemainingSeconds?: number;
   progressPercent: number;
+  isCookieMode?: boolean;
 }
 
 export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
@@ -18,7 +19,8 @@ export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
   isTyping,
   mode,
   sprintRemainingSeconds,
-  progressPercent
+  progressPercent,
+  isCookieMode = false
 }) => {
   const isTimeSprint = mode === 'Time' || mode === 'Sprint';
 
@@ -27,8 +29,18 @@ export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
       {/* Ambient metrics line */}
       <div className="flex items-center justify-between text-xs font-mono text-ink-400 px-0.5">
         <div className="flex items-center gap-3 tabular-nums">
-          <span className="text-ink-100 font-medium">
-            <span className="text-accent">{netWpm}</span> wpm
+          <span className="text-ink-100 font-medium flex items-center gap-1">
+            {isCookieMode ? (
+              <>
+                <span className="animate-bounce inline-block text-[11px]">🍪</span>
+                <span className="text-accent font-bold">{netWpm}</span>
+                <span className="text-accent/90 text-[10px] uppercase tracking-wider font-semibold">cbpm</span>
+              </>
+            ) : (
+              <>
+                <span className="text-accent">{netWpm}</span> wpm
+              </>
+            )}
           </span>
           <span className="text-ink-400/30">•</span>
           <span className={accuracy < 95 ? 'text-incorrect font-medium' : 'text-correct'}>
@@ -37,7 +49,17 @@ export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
           {isTyping && streak >= 5 ? (
             <>
               <span className="text-ink-400/30">•</span>
-              <span className="text-accent font-medium">{streak} streak</span>
+              <span className="text-accent font-medium">
+                {isCookieMode && streak >= 150
+                  ? `👑 Master Chocolatier (${streak})`
+                  : isCookieMode && streak >= 100
+                  ? `🍪 Grandma is Proud! (${streak})`
+                  : isCookieMode && streak >= 50
+                  ? `🔥 Golden Crust (${streak})`
+                  : isCookieMode && streak >= 25
+                  ? `🥣 Dough Prepped (${streak})`
+                  : `${streak} streak`}
+              </span>
             </>
           ) : null}
         </div>

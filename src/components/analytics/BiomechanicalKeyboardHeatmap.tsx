@@ -253,6 +253,7 @@ export const BiomechanicalKeyboardHeatmap: React.FC<BiomechanicalKeyboardHeatmap
                         key={k.key}
                         onMouseEnter={() => setHoveredKey(k)}
                         onMouseLeave={() => setHoveredKey(null)}
+                        onClick={() => setHoveredKey(prev => prev?.key === k.key ? null : k)}
                         className={`h-9 sm:h-10 rounded border flex flex-col items-center justify-center transition-all cursor-pointer ${
                           k.width ? k.width : 'w-7 sm:w-9'
                         } ${getKeyStyle(k)} ${

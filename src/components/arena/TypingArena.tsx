@@ -13,7 +13,9 @@ import { TelemetryHUD } from './TelemetryHUD';
 import { WordSpan } from './WordSpan';
 import { VirtualKeyboardHUD } from './VirtualKeyboardHUD';
 import { SessionResultsCard, SecondSnapshot } from './SessionResultsCard';
+import { CookieJarWidget } from './CookieJarWidget';
 import { Button } from '../ui/Button';
+import { useTheme } from '../../context/ThemeContext';
 
 export interface TypingArenaProps {
   onSessionComplete: (record: TypingRecord) => void;
@@ -22,6 +24,8 @@ export interface TypingArenaProps {
   onZenModeChange?: (isZen: boolean) => void;
   customDrillText?: string | null;
   onClearCustomDrill?: () => void;
+  isCookieMode?: boolean;
+  onToggleCookieMode?: () => void;
 }
 
 interface PreviousAttempt {
@@ -129,7 +133,9 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   onOpenTour,
   onZenModeChange,
   customDrillText,
-  onClearCustomDrill
+  onClearCustomDrill,
+  isCookieMode = false,
+  onToggleCookieMode
 }) => {
   const [mode, setMode] = useState<ArenaMode>(getSavedMode);
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(getSavedDifficulty);
@@ -142,6 +148,36 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const [zenMode, setZenMode] = useState<boolean>(false);
   const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
   const [showGhost, setShowGhost] = useState<boolean>(true);
+  const { enterCookieTheme, exitCookieTheme } = useTheme();
+  const previousSoundProfileRef = useRef<SoundProfile>(soundProfile === 'Cookie' ? 'Thock' : soundProfile);
+  const secretCookieBufferRef = useRef<string>('');
+
+  const handleToggleCookie = useCallback(() => {
+    if (isCookieMode) {
+      // Exiting cookie mode: Revert sound and theme cleanly
+      const prevSound = previousSoundProfileRef.current || 'Thock';
+      setSoundProfile(prevSound);
+      try { localStorage.setItem(STORAGE_KEYS.SOUND_PROFILE, prevSound); } catch {}
+      exitCookieTheme();
+      if (onToggleCookieMode) {
+        onToggleCookieMode();
+      }
+    } else {
+      // Entering cookie mode: Remember previous sound, switch to Cookie sound & theme, play unlock audio
+      if (soundProfile !== 'Cookie') {
+        previousSoundProfileRef.current = soundProfile;
+      }
+      setSoundProfile('Cookie');
+      try {
+        localStorage.setItem(STORAGE_KEYS.SOUND_PROFILE, 'Cookie');
+        soundEngine.playCookieUnlock();
+      } catch {}
+      enterCookieTheme();
+      if (onToggleCookieMode) {
+        onToggleCookieMode();
+      }
+    }
+  }, [isCookieMode, soundProfile, enterCookieTheme, exitCookieTheme, onToggleCookieMode]);
 
   // Training modalities
   const [isBlindMode, setIsBlindMode] = useState<boolean>(false);
@@ -199,10 +235,15 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const wordsContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Version-scoped calibration flag: shows once for any user on 1.4.3, then permanently retires
+  // Persistent calibration flag: permanently marks when user has completed at least one test
   const [hasDoneVersionTest, setHasDoneVersionTest] = useState<boolean>(() => {
     try {
-      return (localStorage.getItem('keywarp_1_4_3_test_completed') || localStorage.getItem('keywarp_1_4_2_test_completed') || localStorage.getItem('typepulse_1_3_0_test_completed')) === 'true';
+      return (
+        localStorage.getItem('keywarp_test_completed') === 'true' ||
+        localStorage.getItem('keywarp_1_4_4_test_completed') === 'true' ||
+        localStorage.getItem('keywarp_1_4_3_test_completed') === 'true' ||
+        localStorage.getItem('typepulse_1_3_0_test_completed') === 'true'
+      );
     } catch {
       return false;
     }
@@ -241,6 +282,29 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   useEffect(() => {
     soundEngine.setProfile(soundProfile);
   }, [soundProfile]);
+
+  // Synchronize sound profile automatically whenever cookie mode is toggled
+  useEffect(() => {
+    if (isCookieMode) {
+      if (soundProfile !== 'Cookie') {
+        previousSoundProfileRef.current = soundProfile;
+        setSoundProfile('Cookie');
+        soundEngine.setProfile('Cookie');
+        try {
+          localStorage.setItem(STORAGE_KEYS.SOUND_PROFILE, 'Cookie');
+        } catch {}
+      }
+    } else {
+      if (soundProfile === 'Cookie') {
+        const prevSound = previousSoundProfileRef.current || 'Thock';
+        setSoundProfile(prevSound);
+        soundEngine.setProfile(prevSound);
+        try {
+          localStorage.setItem(STORAGE_KEYS.SOUND_PROFILE, prevSound);
+        } catch {}
+      }
+    }
+  }, [isCookieMode]);
 
   // Notify parent of Zen focus mode immediately
   useEffect(() => {
@@ -547,7 +611,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     };
 
     try {
-      localStorage.setItem('keywarp_1_4_3_test_completed', 'true');
+      localStorage.setItem('keywarp_test_completed', 'true');
     } catch {}
     setHasDoneVersionTest(true);
     setLastCompletedRecord(newRecord);
@@ -800,26 +864,37 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
+        secretCookieBufferRef.current = (secretCookieBufferRef.current + e.key.toLowerCase()).slice(-6);
+        if (secretCookieBufferRef.current.endsWith('cookie') || secretCookieBufferRef.current.endsWith('baker')) {
+          secretCookieBufferRef.current = '';
+          handleToggleCookie();
+        }
         handleCharInput(e.key);
       }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [loadNewText, repeatCurrentPassage, isFinished, handleBackspace, handleSpace, handleCharInput]);
+  }, [loadNewText, repeatCurrentPassage, isFinished, handleBackspace, handleSpace, handleCharInput, handleToggleCookie]);
 
   // Mobile Touch Input Handler
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    if (!val) return;
+    if (!val || val === '') {
+      handleBackspace(false);
+      e.target.value = ' ';
+      return;
+    }
 
     if (val.endsWith(' ')) {
       handleSpace();
     } else {
       const char = val.slice(-1);
-      handleCharInput(char);
+      if (char && char !== ' ') {
+        handleCharInput(char);
+      }
     }
-    e.target.value = '';
+    e.target.value = ' ';
   };
 
   const handleCanvasClick = () => {
@@ -864,8 +939,8 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     >
       {/* Custom Text / Code File Import Modal */}
       {isCustomModalOpen ? (
-        <div className="fixed inset-0 z-50 bg-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-lg border border-ink-400/20 bg-surface p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 font-sans">
+        <div className="fixed inset-0 z-50 bg-bg/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-lg rounded-xl border border-ink-400/20 bg-surface p-4 sm:p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 font-sans max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-ink-400/10 pb-3">
               <div className="flex items-center gap-2">
                 <Code2 className="w-4 h-4 text-accent" />
@@ -1104,6 +1179,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           mode={mode}
           sprintRemainingSeconds={sprintRemainingSeconds}
           progressPercent={progressPercent}
+          isCookieMode={Boolean(isCookieMode)}
         />
       ) : null}
 
@@ -1115,6 +1191,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           }`}
           onClick={handleCanvasClick}
         >
+
           {/* Zen Mode Live Countdown Timer (Top-Left of Canvas to avoid streak overlap) */}
           {isZenActive && mode === 'Time' && (
             <div
@@ -1144,7 +1221,12 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
                   : 'bg-surface/90 border border-accent/40 text-accent shadow-md'
               }`}
             >
-              {streak >= 100 ? (
+              {isCookieMode ? (
+                <>
+                  <span className="text-sm">🍪</span>
+                  <span>{streak} {streak >= 150 ? 'bakes • Master Chocolatier 👑' : streak >= 100 ? 'bakes • Grandma is Proud!' : streak >= 50 ? 'golden brown 🔥' : 'dough flow 🥣'}</span>
+                </>
+              ) : streak >= 100 ? (
                 <>
                   <Sparkles className="w-3.5 h-3.5 fill-current animate-spin" />
                   <span>{streak} streak • GODSPEED</span>
@@ -1319,6 +1401,14 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           lastMistakeKey={lastMistakeKey}
         />
       ) : null}
+
+      {/* Corner Bakery / Cookie Jar HUD Widget */}
+      <CookieJarWidget
+        isActive={Boolean(isCookieMode)}
+        onToggle={handleToggleCookie}
+        currentWpm={startTime ? smoothedNetWpm : 0}
+        totalBaked={Math.floor(correctKeystrokes / 5)}
+      />
     </div>
   );
 };

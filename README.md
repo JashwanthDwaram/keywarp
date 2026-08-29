@@ -4,7 +4,7 @@
 
 **A high-velocity touch-typing engine with adaptive AI kinesiology coaching and real-time biomechanical telemetry.**
 
-[![Live Demo](https://img.shields.io/badge/Live_App-keywarp-e5a93b?style=for-the-badge&logo=vercel&logoColor=white)](https://typepulseai.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live_App-keywarp-e5a93b?style=for-the-badge&logo=vercel&logoColor=white)](https://keywarp.vercel.app)
 [![AI Engine](https://img.shields.io/badge/AI_Engine-Gemini_3.6_Flash-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)](https://aistudio.google.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
@@ -12,7 +12,7 @@
 
 <br />
 
-[**Try Live App**](https://typepulseai.vercel.app) • [**Report an Issue**](https://github.com/JashwanthDwaram/typepulse/issues)
+[**Try Live App**](https://keywarp.vercel.app) • [**Report an Issue**](https://github.com/JashwanthDwaram/keywarp/issues)
 
 <br />
 
@@ -133,8 +133,8 @@ While you type, it records your inter-key latency and mistake patterns. It then 
 Crafted by **Jashwanth Dwaram**
 
 * **GitHub**: [@JashwanthDwaram](https://github.com/JashwanthDwaram)
-* **Repository**: [JashwanthDwaram/typepulse](https://github.com/JashwanthDwaram/typepulse)
-* **Live App**: [typepulseai.vercel.app](https://typepulseai.vercel.app)
+* **Repository**: [JashwanthDwaram/keywarp](https://github.com/JashwanthDwaram/keywarp)
+* **Live App**: [keywarp.vercel.app](https://keywarp.vercel.app)
 
 ---
 

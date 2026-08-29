@@ -54,10 +54,10 @@ export const VirtualKeyboardHUD: React.FC<VirtualKeyboardHUDProps> = ({
 
   return (
     <div
-      className={`w-full max-w-3xl mx-auto rounded border border-ink-400/15 bg-surface p-3 select-none ${className}`}
+      className={`w-full max-w-3xl mx-auto rounded border border-ink-400/15 bg-surface p-2.5 sm:p-3 select-none overflow-x-auto scrollbar-none ${className}`}
     >
       <div
-        className="grid gap-1 text-[11px] font-mono"
+        className="grid gap-1 text-[10px] sm:text-[11px] font-mono min-w-[340px]"
         style={{ gridTemplateColumns: 'repeat(30, minmax(0, 1fr))' }}
       >
         {/* Row 1: Numbers (26 + 4 = 30 cols) */}

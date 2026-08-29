@@ -87,5 +87,16 @@ export const THEMES: Record<string, Theme> = {
     error: '#e24b4a',
     errorExtra: '#639922',
     surface: '#20241c'
+  },
+  'warm-cookie': {
+    id: 'warm-cookie',
+    name: '🍪 Warm Cookie',
+    bg: '#1c1917',
+    sub: '#a8a29e',
+    text: '#fef3c7',
+    main: '#f59e0b',
+    error: '#ef4444',
+    errorExtra: '#84cc16',
+    surface: '#292524'
   }
 };

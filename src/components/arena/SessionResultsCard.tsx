@@ -282,9 +282,10 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
     }
 
     // Footer
+    const isCookie = typeof window !== 'undefined' && (localStorage.getItem('keywarp_cookie_mode') === 'true' || localStorage.getItem('keywarp_cookie_unlocked') === 'true');
     ctx.fillStyle = '#8a8578';
     ctx.font = '11px monospace';
-    ctx.fillText(`keywarp.app • ${new Date().toLocaleDateString()}`, 40, 415);
+    ctx.fillText(`${isCookie ? 'keywarp.app • baked by Jashwanth Dwaram 🍪' : 'keywarp.app • high-velocity typing engine'} • ${new Date().toLocaleDateString()}`, 40, 415);
 
     canvas.toBlob(async (blob) => {
       if (!blob) return;
@@ -329,6 +330,12 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-400 font-mono text-[10px] font-semibold tracking-wider shadow-[0_0_12px_rgba(245,158,11,0.25)] animate-pulse">
                 <Sparkles className="w-3 h-3 text-amber-400" />
                 <span>NEW PB</span>
+              </span>
+            )}
+            {typeof window !== 'undefined' && localStorage.getItem('keywarp_cookie_mode') === 'true' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-400 font-mono text-[10px] font-semibold tracking-wider">
+                <span>🍪</span>
+                <span>{Math.floor(record.charactersTyped / 5)} BAKED</span>
               </span>
             )}
           </div>
@@ -541,13 +548,15 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
               {validSnapshots.map((s, i) => (
                 <rect
                   key={i}
-                  x={getX(s.second) - 6}
+                  x={getX(s.second) - 8}
                   y={padding.top}
-                  width="12"
+                  width="16"
                   height={height - padding.top - padding.bottom}
                   fill="transparent"
                   className="cursor-crosshair"
                   onMouseEnter={() => setHoverIndex(i)}
+                  onTouchStart={() => setHoverIndex(i)}
+                  onClick={() => setHoverIndex(prev => prev === i ? null : i)}
                 />
               ))}
 
@@ -660,8 +669,8 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
       )}
 
       {/* Action Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-ink-400/10">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-3 border-t border-ink-400/10">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="secondary"
             size="sm"
@@ -700,7 +709,7 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
           onClick={handleNextTestClick}
           icon={<ArrowRight className={`w-3.5 h-3.5 ${shouldGlowNextTest ? 'text-accent' : 'text-ink-100'}`} />}
           iconPosition="right"
-          className={shouldGlowNextTest ? 'first-time-next-glow text-ink-100 font-medium' : ''}
+          className={`w-full sm:w-auto justify-center ${shouldGlowNextTest ? 'first-time-next-glow text-ink-100 font-medium' : ''}`}
         >
           Next test (Tab + Enter)
         </Button>

@@ -4,7 +4,7 @@
  * with ZERO external audio files or network requests.
  */
 
-export type SoundProfile = 'Thock' | 'Click' | 'Topre' | 'Buckling' | 'Bubble' | 'Silent';
+export type SoundProfile = 'Thock' | 'Click' | 'Topre' | 'Buckling' | 'Bubble' | 'Cookie' | 'Silent';
 export type AmbientSoundscape = 'Off' | 'Drone' | 'Brown' | 'Binaural';
 
 class SoundEngine {
@@ -284,6 +284,62 @@ class SoundEngine {
     this.playComplete();
   }
 
+  public playCookieUnlock(): void {
+    if (this.volume <= 0) return;
+    try {
+      const ctx = this.getContext();
+      if (!ctx || !this.masterGain) return;
+
+      const t = ctx.currentTime;
+      // Warm sparkling oven chime arpeggio: C5 -> E5 -> G5 -> C6 -> E6
+      const notes = [523.25, 659.25, 783.99, 1046.5, 1318.51];
+      notes.forEach((freq, i) => {
+        if (!ctx || !this.masterGain) return;
+        const noteTime = t + i * 0.07;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        gain.gain.setValueAtTime(0.09 * this.volume, noteTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(noteTime);
+        osc.stop(noteTime + 0.35);
+      });
+
+      // Layered subtle crisp crunch snap at the end of the chime
+      const crunchTime = t + 0.28;
+      const bufferSize = Math.floor(ctx.sampleRate * 0.06);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.015));
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(2800, crunchTime);
+      filter.Q.setValueAtTime(3.0, crunchTime);
+
+      const crunchGain = ctx.createGain();
+      crunchGain.gain.setValueAtTime(0.08 * this.volume, crunchTime);
+      crunchGain.gain.exponentialRampToValueAtTime(0.001, crunchTime + 0.06);
+
+      noise.connect(filter);
+      filter.connect(crunchGain);
+      crunchGain.connect(this.masterGain);
+
+      noise.start(crunchTime);
+    } catch {}
+  }
+
   public playKey(profile: SoundProfile = this.currentProfile, isSpace = false, isError = false): void {
     if (profile === 'Silent' || this.volume <= 0) return;
     try {
@@ -422,6 +478,88 @@ class SoundEngine {
 
         osc.start(t);
         osc.stop(t + 0.035);
+        return;
+      }
+
+      if (profile === 'Cookie') {
+        if (isSpace) {
+          // Spacebar: "Chomp / Big Bite Crunch"
+          const biteOsc = ctx.createOscillator();
+          const biteGain = ctx.createGain();
+          biteOsc.type = 'triangle';
+          biteOsc.frequency.setValueAtTime(260 + (Math.random() * 30 - 15), t);
+          biteOsc.frequency.exponentialRampToValueAtTime(110, t + 0.055);
+
+          biteGain.gain.setValueAtTime(0.14 * this.volume, t);
+          biteGain.gain.exponentialRampToValueAtTime(0.001, t + 0.055);
+
+          biteOsc.connect(biteGain);
+          biteGain.connect(this.masterGain);
+          biteOsc.start(t);
+          biteOsc.stop(t + 0.055);
+
+          const bufferSize = Math.floor(ctx.sampleRate * 0.045);
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const output = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.012));
+          }
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1900 + (Math.random() * 200 - 100), t);
+          filter.Q.setValueAtTime(2.2, t);
+
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.11 * this.volume, t);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(this.masterGain);
+          noise.start(t);
+        } else {
+          // Regular Key: "Crisp Wafer / Cookie Crumb Snap"
+          const bufferSize = Math.floor(ctx.sampleRate * 0.025);
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const output = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.006));
+          }
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(2700 + (Math.random() * 600 - 300), t);
+          filter.Q.setValueAtTime(3.5, t);
+
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.08 * this.volume, t);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(this.masterGain);
+          noise.start(t);
+
+          const popOsc = ctx.createOscillator();
+          const popGain = ctx.createGain();
+          popOsc.type = 'sine';
+          popOsc.frequency.setValueAtTime(340 + (Math.random() * 50 - 25), t);
+          popOsc.frequency.exponentialRampToValueAtTime(140, t + 0.025);
+
+          popGain.gain.setValueAtTime(0.07 * this.volume, t);
+          popGain.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+
+          popOsc.connect(popGain);
+          popGain.connect(this.masterGain);
+          popOsc.start(t);
+          popOsc.stop(t + 0.025);
+        }
+        return;
       }
     } catch {}
   }

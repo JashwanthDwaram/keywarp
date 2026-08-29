@@ -8,7 +8,7 @@ import { TypingRecord } from '../types';
 export function exportRecordsToJson(records: TypingRecord[]): void {
   const dataStr = JSON.stringify({
     app: 'KeyWarp',
-    version: '1.4.3',
+    version: '1.4.5',
     exportedAt: new Date().toISOString(),
     recordsCount: records.length,
     records

@@ -7,6 +7,9 @@ interface ThemeContextType {
   currentTheme: Theme;
   setThemeId: (id: string) => void;
   availableThemes: Theme[];
+  isCookieUnlocked: boolean;
+  enterCookieTheme: () => void;
+  exitCookieTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -16,14 +19,49 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return localStorage.getItem('keywarp_theme') || localStorage.getItem('typepulse_theme') || 'earth-minimal';
   });
 
+  const [isCookieUnlocked, setIsCookieUnlocked] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('keywarp_cookie_unlocked') === 'true' || localStorage.getItem('keywarp_cookie_mode') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const currentTheme = THEMES[themeId] || THEMES['earth-minimal'];
 
   const setThemeId = (id: string) => {
     if (THEMES[id]) {
       setThemeIdState(id);
       localStorage.setItem('keywarp_theme', id);
+      if (id !== 'warm-cookie') {
+        localStorage.setItem('keywarp_prev_theme', id);
+      }
       trackThemeChange(id);
     }
+  };
+
+  const enterCookieTheme = () => {
+    setIsCookieUnlocked(true);
+    try {
+      localStorage.setItem('keywarp_cookie_unlocked', 'true');
+      if (themeId !== 'warm-cookie') {
+        localStorage.setItem('keywarp_prev_theme', themeId);
+      }
+    } catch {}
+    setThemeIdState('warm-cookie');
+    localStorage.setItem('keywarp_theme', 'warm-cookie');
+    trackThemeChange('warm-cookie');
+  };
+
+  const exitCookieTheme = () => {
+    let prev = 'earth-minimal';
+    try {
+      prev = localStorage.getItem('keywarp_prev_theme') || 'earth-minimal';
+      if (prev === 'warm-cookie') prev = 'earth-minimal';
+    } catch {}
+    setThemeIdState(prev);
+    localStorage.setItem('keywarp_theme', prev);
+    trackThemeChange(prev);
   };
 
   useEffect(() => {
@@ -54,8 +92,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     document.body.style.color = currentTheme.text;
   }, [currentTheme]);
 
+  const availableThemes = Object.values(THEMES).filter(t => {
+    if (t.id === 'warm-cookie') return isCookieUnlocked;
+    return true;
+  });
+
   return (
-    <ThemeContext.Provider value={{ currentTheme, setThemeId, availableThemes: Object.values(THEMES) }}>
+    <ThemeContext.Provider value={{ currentTheme, setThemeId, availableThemes, isCookieUnlocked, enterCookieTheme, exitCookieTheme }}>
       {children}
     </ThemeContext.Provider>
   );

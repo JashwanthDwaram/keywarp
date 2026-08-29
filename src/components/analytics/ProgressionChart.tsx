@@ -177,6 +177,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
                     className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer min-w-0"
                     onMouseEnter={() => setHoverIndex(idx)}
                     onMouseLeave={() => setHoverIndex(null)}
+                    onClick={() => setHoverIndex(prev => prev === idx ? null : idx)}
                   >
                     {/* Bar Container */}
                     <div className="w-full bg-ink-400/10 rounded-t-sm h-full flex items-end overflow-hidden relative">

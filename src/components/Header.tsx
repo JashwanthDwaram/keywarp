@@ -1,23 +1,61 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, BarChart3, Palette, Zap, Compass } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { soundEngine } from '../utils/soundEngine';
 
 export interface HeaderProps {
   activeTab: 'arena' | 'coach' | 'analytics';
   onTabChange: (tab: 'arena' | 'coach' | 'analytics') => void;
   isZenActive: boolean;
   onOpenTour?: () => void;
+  isCookieMode?: boolean;
+  onToggleCookieMode?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onTabChange,
   isZenActive,
-  onOpenTour
+  onOpenTour,
+  isCookieMode = false,
+  onToggleCookieMode
 }) => {
-  const { currentTheme, setThemeId, availableThemes } = useTheme();
+  const { currentTheme, setThemeId, availableThemes, enterCookieTheme, exitCookieTheme } = useTheme();
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const themeRef = useRef<HTMLDivElement>(null);
+  const logoClickRef = useRef<{ count: number; lastTime: number }>({ count: 0, lastTime: 0 });
+
+  const handleLogoClick = () => {
+    onTabChange('arena');
+
+    // If already in cookie mode, clicking the logo toggles it off and reverts theme
+    if (isCookieMode) {
+      if (onToggleCookieMode) {
+        onToggleCookieMode();
+      }
+      exitCookieTheme();
+      return;
+    }
+
+    const now = Date.now();
+    if (now - logoClickRef.current.lastTime < 600) {
+      logoClickRef.current.count += 1;
+    } else {
+      logoClickRef.current.count = 1;
+    }
+    logoClickRef.current.lastTime = now;
+
+    if (logoClickRef.current.count >= 5) {
+      logoClickRef.current.count = 0;
+      try {
+        soundEngine.playCookieUnlock();
+      } catch {}
+      if (onToggleCookieMode) {
+        onToggleCookieMode();
+      }
+      enterCookieTheme();
+    }
+  };
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -39,15 +77,27 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-4xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-1.5 sm:gap-2">
         {/* Monogrammed "kw" Logo & lowercase "keywarp" */}
         <div
-          className="flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none shrink-0"
-          onClick={() => onTabChange('arena')}
+          className="flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none shrink-0 group"
+          onClick={handleLogoClick}
+          title={isCookieMode ? '🍪 Cookie Mode Active! Click to switch' : 'keywarp (click 5x for cookie surprise)'}
         >
-          <div className="w-6 h-6 rounded bg-surface border border-accent/40 flex items-center justify-center font-mono text-xs font-bold text-accent tracking-tighter shrink-0">
-            kw
+          <div className={`w-6 h-6 rounded bg-surface border flex items-center justify-center font-mono text-xs font-bold transition-all shrink-0 ${
+            isCookieMode
+              ? 'border-amber-500 text-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.6)] animate-pulse'
+              : 'border-accent/40 text-accent group-hover:border-accent'
+          }`}>
+            {isCookieMode ? '🍪' : 'kw'}
           </div>
-          <span className="text-xs sm:text-sm font-medium text-ink-100 font-sans tracking-tight hidden sm:inline">
-            keywarp
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs sm:text-sm font-medium text-ink-100 font-sans tracking-tight hidden sm:inline">
+              keywarp
+            </span>
+            {isCookieMode ? (
+              <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-amber-500/15 border border-amber-500/40 text-amber-500 font-semibold animate-in fade-in">
+                bake
+              </span>
+            ) : null}
+          </div>
         </div>
 
         {/* Tab Navigation Pill Bar (All 3 tabs clearly visible on mobile) */}

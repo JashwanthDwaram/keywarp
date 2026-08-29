@@ -94,17 +94,23 @@ export default async function handler(req, res) {
       }
     }
     const { records = [], isMobile = false } = body || {};
+    const safeRecords = Array.isArray(records) ? records.slice(-30) : [];
+    const safeIsMobile = Boolean(isMobile);
 
-    // Extract error patterns from telemetry
+    // Extract error patterns from telemetry with strict character sanitization
     const errorMap = {};
-    records.forEach(r => {
-      if (r.mistypedKeys && r.mistypedKeys !== 'None') {
-        r.mistypedKeys.split(';').forEach(pair => {
+    safeRecords.forEach(r => {
+      if (r && typeof r === 'object' && r.mistypedKeys && typeof r.mistypedKeys === 'string' && r.mistypedKeys !== 'None') {
+        const cleanMistyped = r.mistypedKeys.slice(0, 300);
+        cleanMistyped.split(';').forEach(pair => {
           const [k, countStr] = pair.split(':');
-          if (k && countStr) {
+          if (k && countStr && k.length <= 10) {
             const count = parseInt(countStr, 10);
-            if (!isNaN(count)) {
-              errorMap[k] = (errorMap[k] || 0) + count;
+            if (!isNaN(count) && count > 0 && count < 1000) {
+              const safeKey = k.replace(/[^\w\s.,!?;:'"()[\]{}+=\-_\\/]/g, '').slice(0, 10);
+              if (safeKey) {
+                errorMap[safeKey] = (errorMap[safeKey] || 0) + count;
+              }
             }
           }
         });
@@ -116,13 +122,14 @@ export default async function handler(req, res) {
       .slice(0, 6)
       .map(([k, c]) => `${k === ' ' || k === '[space]' ? 'SPACE' : k} (${c} misses)`);
 
-    const avgWpm = records.length > 0
-      ? Math.round(records.reduce((acc, r) => acc + r.netWpm, 0) / records.length)
+    const validWpmRecords = safeRecords.filter(r => r && typeof r.netWpm === 'number' && Number.isFinite(r.netWpm));
+    const avgWpm = validWpmRecords.length > 0
+      ? Math.round(validWpmRecords.reduce((acc, r) => acc + Math.max(0, Math.min(350, r.netWpm)), 0) / validWpmRecords.length)
       : 45;
-    const avgAcc = records.length > 0
-      ? Math.round((records.reduce((acc, r) => acc + r.accuracy, 0) / records.length) * 10) / 10
+    const avgAcc = validWpmRecords.length > 0
+      ? Math.round((validWpmRecords.reduce((acc, r) => acc + Math.max(0, Math.min(100, r.accuracy || 0)), 0) / validWpmRecords.length) * 10) / 10
       : 95;
-    const bestWpm = records.length > 0 ? Math.max(...records.map(r => r.netWpm)) : 50;
+    const bestWpm = validWpmRecords.length > 0 ? Math.max(...validWpmRecords.map(r => Math.max(0, Math.min(350, r.netWpm)))) : 50;
 
     const platformInstruction = isMobile
       ? `CRITICAL PLATFORM CONTEXT: The user is typing on a Mobile Touchscreen device (Virtual on-screen soft keyboard / dual-thumb typing).
@@ -149,17 +156,17 @@ Analyze the user's typing telemetry and output a strict JSON object with EXACTLY
   }
 }`;
 
-    const userTelemetryPrompt = records.length > 0
+    const userTelemetryPrompt = safeRecords.length > 0
       ? `User Telemetry Data:
-- Platform: ${isMobile ? 'Mobile Touchscreen (Dual Thumbs)' : 'Desktop/Laptop Keyboard'}
-- Total Sessions: ${records.length}
+- Platform: ${safeIsMobile ? 'Mobile Touchscreen (Dual Thumbs)' : 'Desktop/Laptop Keyboard'}
+- Total Sessions: ${safeRecords.length}
 - Personal Best: ${bestWpm} WPM, Average Net Speed: ${avgWpm} WPM, Average Accuracy: ${avgAcc}%
 - Mistyped Keys: ${sortedErrors.join(', ') || 'None (High Precision)'}
 - Recent 3 Sessions:
-${records.slice(-3).map((r, i) => `  ${i + 1}. Mode: ${r.mode}, Net WPM: ${r.netWpm}, Accuracy: ${r.accuracy}%, Errors: ${r.totalErrors}`).join('\n')}
+${safeRecords.slice(-3).map((r, i) => `  ${i + 1}. Mode: ${String(r.mode || 'Standard').slice(0, 20)}, Net WPM: ${Number(r.netWpm) || 0}, Accuracy: ${Number(r.accuracy) || 100}%, Errors: ${Number(r.totalErrors) || 0}`).join('\n')}
 
 Generate the diagnostic breakdown and practice drill in strict JSON.`
-      : `User is starting fresh with 0 recorded sessions on ${isMobile ? 'Mobile' : 'Desktop'}. Formulate an inspiring onboarding diagnostic and a starter rhythm drill in strict JSON.`;
+      : `User is starting fresh with 0 recorded sessions on ${safeIsMobile ? 'Mobile' : 'Desktop'}. Formulate an inspiring onboarding diagnostic and a starter rhythm drill in strict JSON.`;
 
     const fullPrompt = `${systemPrompt}\n\n${userTelemetryPrompt}`;
     const genAI = new GoogleGenerativeAI(apiKey);

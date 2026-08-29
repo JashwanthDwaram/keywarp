@@ -200,7 +200,7 @@ export const AICoachLab: React.FC<AICoachLabProps> = ({
           </div>
 
           {/* Action Launch CTA */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
             <p className="text-xs text-ink-400">
               Targeting keys <span className="font-mono text-ink-100 font-medium">[{focusKeys.join(', ')}]</span> to eliminate transition hesitations.
             </p>
@@ -208,7 +208,7 @@ export const AICoachLab: React.FC<AICoachLabProps> = ({
             <button
               type="button"
               onClick={handleStartDrill}
-              className="flex items-center gap-2 px-5 py-2.5 rounded bg-accent text-accent-contrast font-semibold text-xs sm:text-sm hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-sm"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded bg-accent text-accent-contrast font-semibold text-xs sm:text-sm hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-sm w-full sm:w-auto"
             >
               <Play className="w-4 h-4 fill-current" />
               <span>Launch Module #{currentModuleNumber}</span>

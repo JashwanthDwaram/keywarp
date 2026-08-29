@@ -104,7 +104,13 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
   const wordOptions = [10, 25, 50, 100];
   const metronomeOptions = [60, 80, 100, 120];
   const difficulties: DifficultyLevel[] = ['Easy', 'Medium', 'Hard'];
-  const soundProfiles: SoundProfile[] = ['Thock', 'Click', 'Topre', 'Buckling', 'Bubble', 'Silent'];
+  const isCookieUnlocked =
+    typeof window !== 'undefined' &&
+    (localStorage.getItem('keywarp_cookie_unlocked') === 'true' ||
+      localStorage.getItem('keywarp_cookie_mode') === 'true');
+  const soundProfiles: SoundProfile[] = isCookieUnlocked
+    ? ['Thock', 'Click', 'Topre', 'Buckling', 'Bubble', 'Cookie', 'Silent']
+    : ['Thock', 'Click', 'Topre', 'Buckling', 'Bubble', 'Silent'];
   const ambientProfiles: { id: AmbientSoundscape; label: string }[] = [
     { id: 'Off', label: 'off' },
     { id: 'Drone', label: 'drone' },
@@ -298,7 +304,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
             ) : (
               <Volume2 className="w-3.5 h-3.5 text-accent" />
             )}
-            <span>{soundProfile.toLowerCase()}</span>
+            <span>{soundProfile === 'Cookie' ? 'crunch' : soundProfile.toLowerCase()}</span>
             {ambientSoundscape !== 'Off' && (
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" title={`Ambience: ${ambientSoundscape}`} />
             )}
@@ -350,7 +356,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
                           : 'text-ink-400 hover:text-ink-100 hover:bg-bg/40'
                       }`}
                     >
-                      {sp.toLowerCase()}
+                      {sp === 'Cookie' ? '🍪 crunch' : sp.toLowerCase()}
                     </button>
                   ))}
                 </div>
@@ -415,9 +421,9 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
 
       {/* 3. Quick Settings Modal */}
       {isSettingsOpen ? (
-        <div className="fixed inset-0 z-50 bg-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-lg border border-ink-400/20 bg-surface p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 font-sans">
-            <div className="flex items-center justify-between border-b border-ink-400/10 pb-3">
+        <div className="fixed inset-0 z-50 bg-bg/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-md rounded-xl border border-ink-400/20 bg-surface p-4 sm:p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 font-sans max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-ink-400/10 pb-3 shrink-0">
               <div className="flex items-center gap-2">
                 <Settings className="w-4 h-4 text-accent" />
                 <h3 className="text-sm font-medium text-ink-100">
@@ -433,7 +439,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
               </button>
             </div>
 
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            <div className="space-y-3 overflow-y-auto pr-1 flex-1">
               {/* Specialized Practice Modes */}
               <div className="text-[11px] font-mono text-ink-400 uppercase tracking-wider">
                 Specialized Curriculums
