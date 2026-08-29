@@ -18,6 +18,7 @@ import { Button } from '../ui/Button';
 import { useTheme } from '../../context/ThemeContext';
 
 export interface TypingArenaProps {
+  isActiveTab?: boolean;
   onSessionComplete: (record: TypingRecord) => void;
   onOpenCoach?: () => void;
   onOpenTour?: () => void;
@@ -128,6 +129,7 @@ const getInitialTargetText = (
 };
 
 export const TypingArena: React.FC<TypingArenaProps> = ({
+  isActiveTab = true,
   onSessionComplete,
   onOpenCoach,
   onOpenTour,
@@ -153,31 +155,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const secretCookieBufferRef = useRef<string>('');
 
   const handleToggleCookie = useCallback(() => {
-    if (isCookieMode) {
-      // Exiting cookie mode: Revert sound and theme cleanly
-      const prevSound = previousSoundProfileRef.current || 'Thock';
-      setSoundProfile(prevSound);
-      try { localStorage.setItem(STORAGE_KEYS.SOUND_PROFILE, prevSound); } catch {}
-      exitCookieTheme();
-      if (onToggleCookieMode) {
-        onToggleCookieMode();
-      }
-    } else {
-      // Entering cookie mode: Remember previous sound, switch to Cookie sound & theme, play unlock audio
-      if (soundProfile !== 'Cookie') {
-        previousSoundProfileRef.current = soundProfile;
-      }
-      setSoundProfile('Cookie');
-      try {
-        localStorage.setItem(STORAGE_KEYS.SOUND_PROFILE, 'Cookie');
-        soundEngine.playCookieUnlock();
-      } catch {}
-      enterCookieTheme();
-      if (onToggleCookieMode) {
-        onToggleCookieMode();
-      }
+    if (onToggleCookieMode) {
+      onToggleCookieMode();
     }
-  }, [isCookieMode, soundProfile, enterCookieTheme, exitCookieTheme, onToggleCookieMode]);
+  }, [onToggleCookieMode]);
 
   // Training modalities
   const [isBlindMode, setIsBlindMode] = useState<boolean>(false);
@@ -249,8 +230,8 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     }
   });
 
-  // Auto-zen active when typing is in progress or when manually toggled
-  const isZenActive = (zenMode || Boolean(startTime && !isFinished));
+  // Auto-zen active when typing is in progress or when manually toggled (strictly when on the active Arena tab)
+  const isZenActive = Boolean(isActiveTab) && (zenMode || Boolean(startTime && !isFinished));
 
   // Word list parsed from targetText
   const words = useMemo(() => {
@@ -822,8 +803,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     }
   }, [isFinished, currentInput, wordIndex, typedWords]);
 
-  // Global window listener: guarantees 100% reliable keystroke capture across entire browser
+  // Global window listener: guarantees 100% reliable keystroke capture across entire browser only when active tab is Arena
   useEffect(() => {
+    if (!isActiveTab) return;
+
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === 'TEXTAREA' || (target.tagName === 'INPUT' && target !== inputRef.current))) {
@@ -875,10 +858,11 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [loadNewText, repeatCurrentPassage, isFinished, handleBackspace, handleSpace, handleCharInput, handleToggleCookie]);
+  }, [isActiveTab, loadNewText, repeatCurrentPassage, isFinished, handleBackspace, handleSpace, handleCharInput, handleToggleCookie]);
 
   // Mobile Touch Input Handler
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isActiveTab) return;
     const val = e.target.value;
     if (!val || val === '') {
       handleBackspace(false);

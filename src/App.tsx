@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import React, { useState, useEffect, useCallback, useTransition, useRef } from 'react';
 import { Command, Sparkles, ArrowRight, X, Compass } from 'lucide-react';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -10,10 +10,11 @@ import { AnalyticsHub } from './components/analytics/AnalyticsHub';
 import { ShaderBackground } from './components/ShaderBackground';
 import { TourModal } from './components/tour/TourModal';
 import { CreditsModal } from './components/CreditsModal';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { soundEngine } from './utils/soundEngine';
 import { trackTestCompleted, trackTabChange, trackCoachDrillApplied } from './utils/telemetry';
 
-export const CURRENT_TOUR_VERSION = '1.4.5';
+export const CURRENT_TOUR_VERSION = '1.4.6';
 
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'arena' | 'coach' | 'analytics'>('arena');
@@ -30,6 +31,8 @@ export const AppContent: React.FC = () => {
     }
   });
   const [, startTransition] = useTransition();
+  const { enterCookieTheme, exitCookieTheme } = useTheme();
+  const secretCookieBufferRef = useRef<string>('');
 
   const handleToggleCookieMode = useCallback(() => {
     setIsCookieMode(prev => {
@@ -37,9 +40,35 @@ export const AppContent: React.FC = () => {
       try {
         localStorage.setItem('keywarp_cookie_mode', String(next));
       } catch {}
+      if (next) {
+        soundEngine.playCookieUnlock();
+        enterCookieTheme();
+      } else {
+        exitCookieTheme();
+      }
       return next;
     });
-  }, []);
+  }, [enterCookieTheme, exitCookieTheme]);
+
+  // Global secret cookie listener (active across all tabs without triggering Zen Mode or test start)
+  useEffect(() => {
+    const handleGlobalCookieKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'TEXTAREA' || (target.tagName === 'INPUT' && !target.classList.contains('cursor-text')))) {
+        return;
+      }
+      if (e.key && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        secretCookieBufferRef.current = (secretCookieBufferRef.current + e.key.toLowerCase()).slice(-6);
+        if (secretCookieBufferRef.current.endsWith('cookie') || secretCookieBufferRef.current.endsWith('baker')) {
+          secretCookieBufferRef.current = '';
+          handleToggleCookieMode();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalCookieKey);
+    return () => window.removeEventListener('keydown', handleGlobalCookieKey);
+  }, [handleToggleCookieMode]);
 
   // Sync version without resetting existing user completion flags
   useEffect(() => {
@@ -115,6 +144,9 @@ export const AppContent: React.FC = () => {
     trackTabChange(tab);
     startTransition(() => {
       setActiveTab(tab);
+      if (tab !== 'arena') {
+        setIsZenActive(false);
+      }
     });
   }, []);
 
@@ -221,6 +253,7 @@ export const AppContent: React.FC = () => {
       >
         <div className={activeTab === 'arena' ? 'block' : 'hidden'}>
           <TypingArena
+            isActiveTab={activeTab === 'arena'}
             onSessionComplete={handleSessionComplete}
             onOpenCoach={() => handleTabChange('coach')}
             onOpenTour={() => setIsTourOpen(true)}
@@ -257,7 +290,7 @@ export const AppContent: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <span className="font-medium text-ink-100 font-mono">keywarp</span>
-            <span className="text-[10px] font-mono text-ink-400/60 px-1.5 py-0.5 rounded bg-surface border border-ink-400/15">v1.4.5</span>
+            <span className="text-[10px] font-mono text-ink-400/60 px-1.5 py-0.5 rounded bg-surface border border-ink-400/15">v1.4.6</span>
             <span className="text-ink-400/40">•</span>
             <span className="flex items-center gap-1 text-ink-400/80 font-mono text-[11px]">
               <Command className="w-3 h-3 text-accent" /> tab to restart

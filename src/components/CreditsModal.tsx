@@ -42,7 +42,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
               <h2 id="credits-modal-title" className="text-sm font-semibold text-ink-100 flex items-center gap-1.5">
                 <span>KeyWarp</span>
                 <span className="text-[10px] font-mono text-ink-400 font-normal px-1.5 py-0.2 rounded bg-bg border border-ink-400/15">
-                  v1.4.5
+                  v1.4.6
                 </span>
               </h2>
               <p className="text-[11px] text-ink-400">High-velocity typing engine & kinesiology trainer</p>
