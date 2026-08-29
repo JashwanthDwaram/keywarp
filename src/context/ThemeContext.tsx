@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { THEMES, Theme } from '../themes';
 import { hexToRgbTriplet, getContrastTextColor } from '../utils/colorUtils';
+import { trackThemeChange } from '../utils/telemetry';
 
 interface ThemeContextType {
   currentTheme: Theme;
@@ -21,6 +22,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (THEMES[id]) {
       setThemeIdState(id);
       localStorage.setItem('keywarp_theme', id);
+      trackThemeChange(id);
     }
   };
 

@@ -10,6 +10,7 @@ import { FingerDiagnostics } from './FingerDiagnostics';
 import { AchievementsGrid } from './AchievementsGrid';
 import { Button } from '../ui/Button';
 import { exportRecordsToJson, parseImportedJson } from '../../utils/dataImportExport';
+import { trackDataExport, trackDataImport } from '../../utils/telemetry';
 
 export interface AnalyticsHubProps {
   records: TypingRecord[];
@@ -110,6 +111,7 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
         const result = parseImportedJson(text);
         if (onImportRecords && result.records.length > 0) {
           onImportRecords(result.records);
+          trackDataImport('json', result.count);
           setImportStatus(`Imported ${result.count} records!`);
           setTimeout(() => setImportStatus(null), 3000);
         }
@@ -123,10 +125,10 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
-      {/* Top Header with Import / Export & Reset Actions */}
-      <div className="p-3.5 rounded border border-ink-400/15 bg-surface flex flex-wrap items-center justify-between gap-3">
+      {/* Top Banner */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg bg-surface border border-ink-400/15 shadow-sm font-sans">
         <div>
-          <div className="text-xs font-medium text-ink-100 font-sans">
+          <div className="text-xs font-semibold text-ink-100 uppercase tracking-wider font-mono">
             Typing performance analytics
           </div>
           <div className="text-[11px] text-ink-400 font-sans">
@@ -139,7 +141,10 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => exportRecordsToJson(records)}
+            onClick={() => {
+              exportRecordsToJson(records);
+              trackDataExport('json', records.length);
+            }}
             disabled={records.length === 0}
             icon={<Download className="w-3.5 h-3.5" />}
           >

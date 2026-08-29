@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Sparkles, Zap, BarChart3, Activity, X, ArrowRight, ArrowLeft, Check, Keyboard, Compass } from 'lucide-react';
 import { soundEngine } from '../../utils/soundEngine';
+import { trackTourCompleted } from '../../utils/telemetry';
 
 export interface TourModalProps {
   isOpen: boolean;
@@ -198,10 +199,11 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
     } catch {}
     localStorage.setItem('keywarp_discovery_completed', 'true');
     localStorage.setItem('keywarp_tour_completed', 'true');
-    localStorage.setItem('keywarp_tour_version', '1.4.2');
+    localStorage.setItem('keywarp_tour_version', '1.4.3');
     localStorage.setItem('typepulse_discovery_completed', 'true');
     localStorage.setItem('typepulse_tour_completed', 'true');
-    localStorage.setItem('typepulse_tour_version', '1.4.2');
+    localStorage.setItem('typepulse_tour_version', '1.4.3');
+    trackTourCompleted();
     onTabChange('arena');
     setCurrentStep(0);
     onClose();
