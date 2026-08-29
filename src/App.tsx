@@ -272,7 +272,7 @@ export const AppContent: React.FC = () => {
               title="View Creator Credits & Open Source Details"
             >
               <span className={`w-1.5 h-1.5 rounded-full ${isCookieMode ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse' : 'bg-correct shadow-[0_0_6px_rgba(16,185,129,0.5)]'} inline-block`} />
-              <span>{isCookieMode ? 'baked with love :)' : 'made with love :)'}</span>
+              <span>{isCookieMode ? '🍪 oven hot (350°F)' : 'made with love :)'}</span>
               <span className="text-ink-400/60 group-hover:text-accent font-mono text-[10px] px-1 py-0.2 rounded bg-surface border border-ink-400/15">credits ⓘ</span>
             </button>
           </div>
