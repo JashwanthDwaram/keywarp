@@ -449,6 +449,15 @@ export const SessionResultsCard: React.FC<SessionResultsCardProps> = ({
               <span>Velocity cadence waveform</span>
             </div>
             <div className="flex items-center gap-3 text-[11px] font-mono">
+              {typeof record.cadenceConsistency === 'number' && record.cadenceConsistency > 0 && (
+                <span
+                  className={`hidden sm:inline-flex items-center gap-1 ${record.cadenceConsistency >= 70 ? 'text-correct' : 'text-accent'}`}
+                  title="Rhythm consistency — evenness of your keystroke intervals in this session"
+                >
+                  <span className="w-2 h-0.5 bg-current inline-block" />
+                  {record.cadenceConsistency}% cadence
+                </span>
+              )}
               <span className="flex items-center gap-1 text-accent">
                 <span className="w-2 h-0.5 bg-accent inline-block" />
                 Net

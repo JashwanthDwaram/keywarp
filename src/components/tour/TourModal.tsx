@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Sparkles, Zap, BarChart3, Activity, X, ArrowRight, ArrowLeft, Check, Keyboard, Compass } from 'lucide-react';
 import { soundEngine } from '../../utils/soundEngine';
 import { trackTourCompleted } from '../../utils/telemetry';
+import { CURRENT_TOUR_VERSION } from '../../App';
 
 export interface TourModalProps {
   isOpen: boolean;
@@ -20,6 +21,12 @@ interface TourStep {
   actionHint: string;
   nextLabel: string;
 }
+
+// Targets that may not exist yet (e.g. results card renders only after the first test)
+// fall back to an always-present element so the spotlight is never empty on cold start
+const SPOTLIGHT_FALLBACKS: Record<string, string> = {
+  '#session-results-card': '#arena-ribbon-card'
+};
 
 export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChange }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -136,7 +143,11 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
         activeElementRef.current.classList.remove('tour-spotlight-active');
       }
 
-      const target = document.querySelector(step.targetId) as HTMLElement | null;
+      const effectiveTargetId =
+        !document.querySelector(step.targetId) && SPOTLIGHT_FALLBACKS[step.targetId]
+          ? SPOTLIGHT_FALLBACKS[step.targetId]
+          : step.targetId;
+      const target = document.querySelector(effectiveTargetId) as HTMLElement | null;
       if (target) {
         target.classList.add('tour-spotlight-active');
         activeElementRef.current = target;
@@ -199,10 +210,10 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose, onTabChan
     } catch {}
     localStorage.setItem('keywarp_discovery_completed', 'true');
     localStorage.setItem('keywarp_tour_completed', 'true');
-    localStorage.setItem('keywarp_tour_version', '1.4.6');
+    localStorage.setItem('keywarp_tour_version', CURRENT_TOUR_VERSION);
     localStorage.setItem('typepulse_discovery_completed', 'true');
     localStorage.setItem('typepulse_tour_completed', 'true');
-    localStorage.setItem('typepulse_tour_version', '1.4.6');
+    localStorage.setItem('typepulse_tour_version', CURRENT_TOUR_VERSION);
     trackTourCompleted();
     onTabChange('arena');
     setCurrentStep(0);

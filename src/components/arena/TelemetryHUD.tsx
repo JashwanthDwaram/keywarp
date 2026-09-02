@@ -10,6 +10,8 @@ export interface TelemetryHUDProps {
   sprintRemainingSeconds?: number;
   progressPercent: number;
   isCookieMode?: boolean;
+  /** Live 0-100 rhythm consistency computed from recent keystroke intervals */
+  cadenceConsistency?: number;
 }
 
 export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
@@ -20,7 +22,8 @@ export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
   mode,
   sprintRemainingSeconds,
   progressPercent,
-  isCookieMode = false
+  isCookieMode = false,
+  cadenceConsistency = 0
 }) => {
   const isTimeSprint = mode === 'Time' || mode === 'Sprint';
 
@@ -46,6 +49,17 @@ export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
           <span className={accuracy < 95 ? 'text-incorrect font-medium' : 'text-correct'}>
             {accuracy}% acc
           </span>
+          {isTyping && cadenceConsistency > 0 ? (
+            <>
+              <span className="text-ink-400/30">•</span>
+              <span
+                className={`tabular-nums ${cadenceConsistency >= 70 ? 'text-correct' : cadenceConsistency >= 40 ? 'text-accent' : 'text-incorrect'}`}
+                title="Rhythm consistency — how even your keystroke intervals are"
+              >
+                {cadenceConsistency}% cadence
+              </span>
+            </>
+          ) : null}
           {isTyping && streak >= 5 ? (
             <>
               <span className="text-ink-400/30">•</span>

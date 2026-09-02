@@ -5,7 +5,7 @@
 **A high-velocity touch-typing engine with adaptive AI kinesiology coaching and real-time biomechanical telemetry.**
 
 [![Live Demo](https://img.shields.io/badge/Live_App-keywarp-e5a93b?style=for-the-badge&logo=vercel&logoColor=white)](https://keywarp.vercel.app)
-[![AI Engine](https://img.shields.io/badge/AI_Engine-Gemini_3.6_Flash-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)](https://aistudio.google.com)
+[![AI Engine](https://img.shields.io/badge/AI_Engine-Gemini_Flash-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)](https://aistudio.google.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
@@ -33,7 +33,7 @@
 
 Most typing trainers only calculate a raw WPM score. KeyWarp tracks where your fingers slow down and helps you fix those hesitation points.
 
-While you type, it records your inter-key latency and mistake patterns. It then sends your telemetry to **Gemini 3.6 Flash** to generate short, targeted practice drills for the specific key transitions holding your speed back.
+While you type, it records your inter-key latency and mistake patterns. It then sends your telemetry to **Google Gemini Flash** to generate short, targeted practice drills for the specific key transitions holding your speed back.
 
 ---
 
@@ -74,7 +74,7 @@ While you type, it records your inter-key latency and mistake patterns. It then 
 ## Tech Stack
 
 * **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
-* **AI Model**: Google Gemini 3.6 Flash via `@google/generative-ai`
+* **AI Model**: Google Gemini Flash via `@google/generative-ai`
 * **Typography**: SF Pro Display and JetBrains Mono
 * **Backend**: Vercel Serverless Functions
 
@@ -90,8 +90,8 @@ While you type, it records your inter-key latency and mistake patterns. It then 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/JashwanthDwaram/typepulse.git
-   cd typepulse
+   git clone https://github.com/JashwanthDwaram/keywarp.git
+   cd keywarp
    ```
 
 2. Install dependencies:
@@ -105,10 +105,11 @@ While you type, it records your inter-key latency and mistake patterns. It then 
    ```
    Open `http://localhost:3000` in your browser.
 
-4. (Optional) Add your Gemini API key in a `.env` file:
+4. (Optional) Add your Gemini API key for the AI Coach. The key is used **server-side only** (in the Vercel serverless function) — never prefix it with `VITE_`, which would inline it into the public browser bundle:
    ```env
-   VITE_GEMINI_API_KEY=your_gemini_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
    ```
+   For local development, create a `.env` file with this variable and run `vercel dev` so the `/api/coach` function is available. Without a key, the coach falls back to an offline heuristic engine.
 
 5. Build for production:
    ```bash

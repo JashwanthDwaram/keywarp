@@ -5,6 +5,8 @@ import { CodeLanguage, WordFrequencyPack } from '../../data/codingPresets';
 
 export type ArenaMode = 'Passage' | 'Time' | 'Words' | 'N-Grams' | 'Weak Words' | 'Quotes' | 'Code' | 'Procedural' | 'Custom';
 export type DifficultyLevel = 'Easy' | 'Medium' | 'Hard';
+// Pacer ghost: fixed target WPM, or 'auto' = +5 above the personal session average
+export type PacerMode = 'Off' | 70 | 100 | 'auto';
 
 export interface ModeSelectorProps {
   mode: ArenaMode;
@@ -22,6 +24,8 @@ export interface ModeSelectorProps {
   isSuddenDeath: boolean;
   isMetronome: boolean;
   metronomePace: number;
+  pacerMode: PacerMode;
+  pacerAutoWpm: number;
   onModeChange: (newMode: ArenaMode) => void;
   onDifficultyChange: (newDiff: DifficultyLevel) => void;
   onSprintDurationChange: (duration: number) => void;
@@ -37,7 +41,9 @@ export interface ModeSelectorProps {
   onToggleSuddenDeath: () => void;
   onToggleMetronome: () => void;
   onChangeMetronomePace: (pace: number) => void;
+  onPacerModeChange: (mode: PacerMode) => void;
   onOpenCustomModal: () => void;
+  onSettingsModalOpenChange?: (isOpen: boolean) => void;
 }
 
 export const ModeSelector: React.FC<ModeSelectorProps> = ({
@@ -56,6 +62,8 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
   isSuddenDeath,
   isMetronome,
   metronomePace,
+  pacerMode,
+  pacerAutoWpm,
   onModeChange,
   onDifficultyChange,
   onSprintDurationChange,
@@ -71,7 +79,9 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
   onToggleSuddenDeath,
   onToggleMetronome,
   onChangeMetronomePace,
-  onOpenCustomModal
+  onPacerModeChange,
+  onOpenCustomModal,
+  onSettingsModalOpenChange
 }) => {
   const [volume, setLocalVolume] = useState<number>(soundEngine.getVolume());
   const [ambientVolume, setLocalAmbientVolume] = useState<number>(soundEngine.getAmbientVolume());
@@ -79,6 +89,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const soundRef = useRef<HTMLDivElement>(null);
+  const settingsPanelRef = useRef<HTMLDivElement>(null);
 
   // Close sound dropdown on outside click
   useEffect(() => {
@@ -90,6 +101,49 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Notify parent so global arena shortcuts (Tab restart / Escape zen) are gated while open
+  useEffect(() => {
+    onSettingsModalOpenChange?.(isSettingsOpen);
+  }, [isSettingsOpen, onSettingsModalOpenChange]);
+
+  // Escape closes the settings modal (capture phase, before arena handlers)
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsSettingsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape, true);
+    return () => window.removeEventListener('keydown', handleEscape, true);
+  }, [isSettingsOpen]);
+
+  // Focus the settings panel when it opens
+  useEffect(() => {
+    if (isSettingsOpen) {
+      settingsPanelRef.current?.focus();
+    }
+  }, [isSettingsOpen]);
+
+  const trapModalTabKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab') return;
+    const focusables = e.currentTarget.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input, textarea, select, a[href], [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
   const primaryModes: { id: ArenaMode; label: string }[] = [
     { id: 'Time', label: 'time' },
@@ -422,7 +476,15 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
       {/* 3. Quick Settings Modal */}
       {isSettingsOpen ? (
         <div className="fixed inset-0 z-50 bg-bg/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="w-full max-w-md rounded-xl border border-ink-400/20 bg-surface p-4 sm:p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 font-sans max-h-[90vh] flex flex-col">
+          <div
+            ref={settingsPanelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Training settings"
+            tabIndex={-1}
+            onKeyDown={trapModalTabKey}
+            className="w-full max-w-md rounded-xl border border-ink-400/20 bg-surface p-4 sm:p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 font-sans max-h-[90vh] flex flex-col focus:outline-none"
+          >
             <div className="flex items-center justify-between border-b border-ink-400/10 pb-3 shrink-0">
               <div className="flex items-center gap-2">
                 <Settings className="w-4 h-4 text-accent" />
@@ -627,6 +689,32 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
                         isMetronome ? 'right-0.5' : 'left-0.5'
                       }`} />
                     </button>
+                  </div>
+                </div>
+
+                {/* Pacer Ghost */}
+                <div className="flex items-center justify-between p-2.5 rounded border border-ink-400/15 bg-bg/40">
+                  <div className="flex items-center gap-2.5">
+                    <Ghost className={`w-4 h-4 ${pacerMode !== 'Off' ? 'text-accent' : 'text-ink-400'}`} />
+                    <div>
+                      <div className="text-xs font-medium text-ink-100 font-mono">Pacer Ghost</div>
+                      <div className="text-[10px] text-ink-400">Fixed-pace ghost caret to race against</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {(['Off', 70, 100, 'auto'] as PacerMode[]).map(p => (
+                      <button
+                        key={String(p)}
+                        type="button"
+                        onClick={() => onPacerModeChange(p)}
+                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded cursor-pointer ${
+                          pacerMode === p ? 'bg-accent text-accent-contrast font-bold' : 'bg-bg text-ink-400 hover:text-ink-100'
+                        }`}
+                        title={p === 'auto' ? `+5 over your average (${pacerAutoWpm} WPM)` : p === 'Off' ? 'Disable pacer ghost' : `Pace at ${p} WPM`}
+                      >
+                        {p === 'auto' ? `auto ${pacerAutoWpm}` : String(p)}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>

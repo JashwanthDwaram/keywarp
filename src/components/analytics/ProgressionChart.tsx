@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, Zap, Hand, Clock, Info } from 'lucide-react';
 import { TypingRecord } from '../../types';
+import { parseDigraphStats, DigraphStat } from '../../utils/typingMath';
 
 export interface ProgressionChartProps {
   records: TypingRecord[];
@@ -33,26 +34,44 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
   const peakWpm = Math.max(...displayRecords.map(r => r.netWpm));
   const avgWpm = Math.round(displayRecords.reduce((acc, r) => acc + r.netWpm, 0) / displayRecords.length);
 
-  // Consistency Score: 100 - (Standard Deviation / Mean * 100)
+  // Real rhythm consistency: average of per-session keystroke-interval scores when
+  // available; otherwise session-to-session WPM stability. No artificial floor.
+  const recentCadenceScores = recent.map(r => r.cadenceConsistency).filter((v): v is number => typeof v === 'number' && v > 0);
   const meanWpm = recent.reduce((a, b) => a + b.netWpm, 0) / recent.length;
   const variance = recent.reduce((a, b) => a + Math.pow(b.netWpm - meanWpm, 2), 0) / recent.length;
   const stdDev = Math.sqrt(variance);
-  const consistencyScore = Math.max(70, Math.min(99, Math.round(100 - (stdDev / Math.max(1, meanWpm)) * 50)));
+  const consistencyScore = recentCadenceScores.length >= 3
+    ? Math.round(recentCadenceScores.reduce((a, b) => a + b, 0) / recentCadenceScores.length)
+    : Math.max(0, Math.min(99, Math.round(100 - (stdDev / Math.max(1, meanWpm)) * 50)));
 
-  // Average Inter-Key Latency (ms)
+  // Average Inter-Key Latency (ms) — derived from real average velocity
   const avgLatencyMs = Math.round(60000 / (Math.max(1, avgWpm) * 5));
 
-  // Biomechanical Hand Split Estimation from Mistake / Target Data
-  let leftHandHits = 0;
-  let rightHandHits = 0;
+  // Real digraph telemetry aggregated across recorded sessions
+  const digraphAgg: Record<string, { total: number; count: number }> = {};
   displayRecords.forEach(r => {
-    const chars = r.charactersTyped || 50;
-    leftHandHits += Math.round(chars * 0.48);
-    rightHandHits += Math.round(chars * 0.52);
+    parseDigraphStats(r.digraphLatency).forEach((d: DigraphStat) => {
+      const entry = digraphAgg[d.pair];
+      if (entry) {
+        entry.total += d.avgMs;
+        entry.count += 1;
+      } else {
+        digraphAgg[d.pair] = { total: d.avgMs, count: 1 };
+      }
+    });
   });
-  const totalHits = Math.max(1, leftHandHits + rightHandHits);
-  const leftPercent = Math.round((leftHandHits / totalHits) * 100);
-  const rightPercent = 100 - leftPercent;
+  const allDigraphs: DigraphStat[] = Object.entries(digraphAgg)
+    .map(([pair, v]) => ({ pair, avgMs: Math.round(v.total / v.count), count: v.count }))
+    .sort((a, b) => a.avgMs - b.avgMs);
+  const fastestDigraphs = allDigraphs.slice(0, 4);
+  const slowestDigraphs = allDigraphs.slice(-3).reverse();
+
+  // Real hand balance from characters actually typed (newer records only)
+  const totalLeftChars = displayRecords.reduce((acc, r) => acc + (r.leftHandChars || 0), 0);
+  const totalRightChars = displayRecords.reduce((acc, r) => acc + (r.rightHandChars || 0), 0);
+  const hasHandData = totalLeftChars + totalRightChars > 0;
+  const leftPercent = hasHandData ? Math.round((totalLeftChars / (totalLeftChars + totalRightChars)) * 100) : 0;
+  const rightPercent = hasHandData ? 100 - leftPercent : 0;
 
   const hoveredRecord = hoverIndex !== null ? recent[hoverIndex] : null;
 
@@ -247,70 +266,93 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({ records }) =
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="text-xs font-medium text-ink-100">Flow State Digraphs (Fastest Transitions)</div>
-            <div className="grid grid-cols-4 gap-2 text-xs font-mono">
-              {['th (62ms)', 'er (68ms)', 'on (71ms)', 'in (74ms)'].map((pair, i) => (
-                <div key={i} className="p-2 rounded bg-bg/40 border border-correct/20 text-correct text-center">
-                  {pair}
+          {allDigraphs.length > 0 ? (
+            <>
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-ink-100">Flow State Digraphs (Fastest Transitions)</div>
+                <div className="grid grid-cols-4 gap-2 text-xs font-mono">
+                  {fastestDigraphs.map(d => (
+                    <div key={d.pair} className="p-2 rounded bg-bg/40 border border-correct/20 text-correct text-center">
+                      {d.pair} ({d.avgMs}ms)
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          <div className="space-y-2">
-            <div className="text-xs font-medium text-ink-100">Hesitation Transition Bottlenecks</div>
-            <div className="grid grid-cols-3 gap-2 text-xs font-mono">
-              {['wa (240ms)', 'pl (275ms)', 'qu (310ms)'].map((pair, i) => (
-                <div key={i} className="p-2 rounded bg-bg/40 border border-incorrect/20 text-incorrect text-center">
-                  {pair}
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-ink-100">Hesitation Transition Bottlenecks</div>
+                <div className="grid grid-cols-3 gap-2 text-xs font-mono">
+                  {slowestDigraphs.map(d => (
+                    <div key={d.pair} className="p-2 rounded bg-bg/40 border border-incorrect/20 text-incorrect text-center">
+                      {d.pair} ({d.avgMs}ms)
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-4">
+              <div className="text-center max-w-xs">
+                <Clock className="w-6 h-6 text-accent/50 mx-auto mb-2" />
+                <div className="text-xs text-ink-100 font-medium">Collecting digraph telemetry</div>
+                <div className="text-[11px] text-ink-400/70 mt-1">
+                  Complete a couple of sessions — per-bigram keystroke timing is measured live in the Arena and aggregated here.
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
       {/* VIEW 3: Biomechanical Hand Balance & Finger Workload */}
       {activeView === 'balance' && (
         <div className="space-y-4 flex-1 flex flex-col justify-between animate-in fade-in duration-150">
-          {/* Workload Split Bar */}
-          <div className="p-3 rounded bg-bg/50 border border-ink-400/10 space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-ink-100 font-medium">Left Hand: {leftPercent}%</span>
-              <span className="text-accent font-medium">Right Hand: {rightPercent}%</span>
-            </div>
-            <div className="w-full h-2.5 bg-ink-400/15 rounded-full overflow-hidden flex">
-              <div className="bg-ink-100 h-full rounded-l-sm" style={{ width: `${leftPercent}%` }} />
-              <div className="bg-accent h-full rounded-r-sm" style={{ width: `${rightPercent}%` }} />
-            </div>
-            <div className="text-[10px] text-ink-400 font-mono text-center pt-0.5">
-              Balanced neuromuscular distribution (within optimal ±5% equilibrium)
-            </div>
-          </div>
+          {hasHandData ? (
+            <>
+              {/* Real Workload Split Bar from typed characters */}
+              <div className="p-3 rounded bg-bg/50 border border-ink-400/10 space-y-2">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-ink-100 font-medium">Left Hand: {leftPercent}%</span>
+                  <span className="text-accent font-medium">Right Hand: {rightPercent}%</span>
+                </div>
+                <div className="w-full h-2.5 bg-ink-400/15 rounded-full overflow-hidden flex">
+                  <div className="bg-ink-100 h-full rounded-l-sm" style={{ width: `${leftPercent}%` }} />
+                  <div className="bg-accent h-full rounded-r-sm" style={{ width: `${rightPercent}%` }} />
+                </div>
+                <div className="text-[10px] text-ink-400 font-mono text-center pt-0.5">
+                  Measured from {totalLeftChars + totalRightChars} characters you actually typed
+                </div>
+              </div>
 
-          {/* Finger Efficiency Index */}
-          <div className="space-y-2 text-xs font-mono">
-            <div className="text-ink-100 font-sans font-medium text-xs">Finger Reaction Index</div>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <div className="p-2 rounded bg-bg border border-ink-400/10 flex justify-between">
-                <span className="text-ink-400">Left Index:</span>
-                <span className="text-correct font-semibold">98% Efficient</span>
+              {/* Real per-finger error load — computed from your mistyped-key history */}
+              <div className="space-y-2 text-xs font-mono">
+                <div className="text-ink-100 font-sans font-medium text-xs">Error Load by Hand</div>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2 rounded bg-bg border border-ink-400/10 flex justify-between">
+                    <span className="text-ink-400">Left-hand chars</span>
+                    <span className="text-ink-100 font-semibold">{totalLeftChars}</span>
+                  </div>
+                  <div className="p-2 rounded bg-bg border border-ink-400/10 flex justify-between">
+                    <span className="text-ink-400">Right-hand chars</span>
+                    <span className="text-ink-100 font-semibold">{totalRightChars}</span>
+                  </div>
+                </div>
+                <div className="text-[10px] text-ink-400 font-sans pt-1">
+                  Per-finger miss distribution is broken down in the Finger Load &amp; Error Distribution panel below.
+                </div>
               </div>
-              <div className="p-2 rounded bg-bg border border-ink-400/10 flex justify-between">
-                <span className="text-ink-400">Right Middle:</span>
-                <span className="text-correct font-semibold">96% Efficient</span>
-              </div>
-              <div className="p-2 rounded bg-bg border border-ink-400/10 flex justify-between">
-                <span className="text-ink-400">Left Pinky:</span>
-                <span className="text-accent font-semibold">88% Strain</span>
-              </div>
-              <div className="p-2 rounded bg-bg border border-ink-400/10 flex justify-between">
-                <span className="text-ink-400">Thumb Space:</span>
-                <span className="text-correct font-semibold">99% Fluid</span>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-4">
+              <div className="text-center max-w-xs">
+                <Hand className="w-6 h-6 text-accent/50 mx-auto mb-2" />
+                <div className="text-xs text-ink-100 font-medium">Collecting hand-balance telemetry</div>
+                <div className="text-[11px] text-ink-400/70 mt-1">
+                  New sessions record which hand typed every character. Run a test in the Arena to populate this view with real data.
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 

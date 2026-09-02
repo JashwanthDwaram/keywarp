@@ -6,9 +6,10 @@ import { generateRandomPassage } from '../../utils/sentenceGenerator';
 import { soundEngine, SoundProfile, AmbientSoundscape } from '../../utils/soundEngine';
 import { CodeLanguage, WordFrequencyPack, getRandomCodeSnippet, getRandomVocabWords } from '../../data/codingPresets';
 import { parseCodeForTyping } from '../../utils/codeParser';
-import { calculateGrossWpm, calculateNetWpm, calculateAccuracy, calculateSmoothedWpm } from '../../utils/typingMath';
+import { calculateGrossWpm, calculateNetWpm, calculateAccuracy, calculateSmoothedWpm, calculateCadenceConsistency, recordDigraphTiming, serializeDigraphStats, DigraphTimings } from '../../utils/typingMath';
+import { computeHandBalance } from '../../utils/keyMap';
 import { decodeChallengeUrl, recordWeakWord, getWeakWordsDrill } from '../../utils/challengeUtils';
-import { ModeSelector, ArenaMode, DifficultyLevel } from './ModeSelector';
+import { ModeSelector, ArenaMode, DifficultyLevel, PacerMode } from './ModeSelector';
 import { TelemetryHUD } from './TelemetryHUD';
 import { WordSpan } from './WordSpan';
 import { VirtualKeyboardHUD } from './VirtualKeyboardHUD';
@@ -95,17 +96,27 @@ const getSavedWordCount = (): number => {
 const getSavedSoundProfile = (): SoundProfile => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem(STORAGE_KEYS.SOUND_PROFILE) as SoundProfile;
-    if (saved && ['Thock', 'Click', 'Topre', 'Buckling', 'Bubble', 'Silent'].includes(saved)) {
+    if (saved && ['Thock', 'Click', 'Topre', 'Buckling', 'Bubble', 'Cookie', 'Silent'].includes(saved)) {
       return saved;
     }
   }
   return 'Thock';
 };
 
+// Sprint stream sized so even 200+ WPM typists can't exhaust the word pool mid-test
+// (assumes worst case ~17 chars/sec ≈ 3.5 words/sec, with generous headroom)
+const generateSprintStream = (durationSeconds: number): string => {
+  const poolSize = Math.max(80, durationSeconds * 5);
+  return Array.from({ length: poolSize }, () =>
+    SPRINT_WORDS[Math.floor(Math.random() * SPRINT_WORDS.length)]
+  ).join(' ');
+};
+
 const getInitialTargetText = (
   initMode: ArenaMode,
   initDiff: DifficultyLevel,
   initWords: number,
+  initSprintDuration: number = 30,
   lang: CodeLanguage = 'typescript',
   pack: WordFrequencyPack = '1k'
 ): { text: string; author: string | null } => {
@@ -114,10 +125,7 @@ const getInitialTargetText = (
   } else if (initMode === 'Code') {
     return { text: getRandomCodeSnippet(lang), author: null };
   } else if (initMode === 'Time') {
-    const stream = Array.from({ length: 36 }, () =>
-      SPRINT_WORDS[Math.floor(Math.random() * SPRINT_WORDS.length)]
-    ).join(' ');
-    return { text: stream, author: null };
+    return { text: generateSprintStream(initSprintDuration), author: null };
   } else if (initMode === 'Quotes') {
     const q = getRandomQuote();
     return { text: q.text, author: q.author };
@@ -152,7 +160,6 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const [showGhost, setShowGhost] = useState<boolean>(true);
   const { enterCookieTheme, exitCookieTheme } = useTheme();
   const previousSoundProfileRef = useRef<SoundProfile>(soundProfile === 'Cookie' ? 'Thock' : soundProfile);
-  const secretCookieBufferRef = useRef<string>('');
 
   const handleToggleCookie = useCallback(() => {
     if (onToggleCookieMode) {
@@ -166,6 +173,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const [isMetronome, setIsMetronome] = useState<boolean>(false);
   const [metronomePace, setMetronomePace] = useState<number>(80);
   const [suddenDeathFailed, setSuddenDeathFailed] = useState<boolean>(false);
+  const [pacerMode, setPacerMode] = useState<PacerMode>('Off');
+
+  // Live rhythm consistency (0-100), updated on every correct keystroke
+  const [cadenceScore, setCadenceScore] = useState<number>(0);
 
   // Challenge Race Banner
   const [activeChallenge, setActiveChallenge] = useState<{ fromWpm: number; mode: string } | null>(null);
@@ -176,13 +187,15 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   // Custom Text Modal State
   const [isCustomModalOpen, setIsCustomModalOpen] = useState<boolean>(false);
   const [customInputText, setCustomInputText] = useState<string>('');
+  // Settings modal lives inside ModeSelector; tracked here to gate global arena shortcuts
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
 
   // Initial text is generated synchronously on render 1 (never empty string)
   const [targetText, setTargetText] = useState<string>(() => {
-    return getInitialTargetText(getSavedMode(), getSavedDifficulty(), getSavedWordCount()).text;
+    return getInitialTargetText(getSavedMode(), getSavedDifficulty(), getSavedWordCount(), getSavedSprintDuration()).text;
   });
   const [quoteAuthor, setQuoteAuthor] = useState<string | null>(() => {
-    return getInitialTargetText(getSavedMode(), getSavedDifficulty(), getSavedWordCount()).author;
+    return getInitialTargetText(getSavedMode(), getSavedDifficulty(), getSavedWordCount(), getSavedSprintDuration()).author;
   });
 
   const [wordIndex, setWordIndex] = useState<number>(0);
@@ -215,6 +228,11 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const wordsContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Real keystroke telemetry: inter-key intervals + per-bigram (digraph) timing sums
+  const keyIntervalsRef = useRef<number[]>([]);
+  const digraphTimingsRef = useRef<DigraphTimings>({});
+  const lastCorrectCharRef = useRef<string>('');
 
   // Persistent calibration flag: permanently marks when user has completed at least one test
   const [hasDoneVersionTest, setHasDoneVersionTest] = useState<boolean>(() => {
@@ -294,16 +312,44 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     }
   }, [isZenActive, onZenModeChange]);
 
+  // Single source of truth for returning the engine to a fresh-test state
+  const resetSessionState = useCallback((opts?: { clearPreviousRun?: boolean; clearLastRecord?: boolean }) => {
+    if (opts?.clearPreviousRun) setPreviousRun(null);
+    if (opts?.clearLastRecord) setLastCompletedRecord(null);
+    setWordIndex(0);
+    setTypedWords([]);
+    setCurrentInput('');
+    setStartTime(null);
+    setEndTime(null);
+    setIsFinished(false);
+    setTotalKeystrokes(0);
+    setCorrectKeystrokes(0);
+    setIncorrectKeystrokes(0);
+    setStreak(0);
+    setMistypedKeysMap({});
+    setSmoothedNetWpm(0);
+    setSmoothedGrossWpm(0);
+    setSnapshots([]);
+    setLastSnapshotSec(0);
+    setSuddenDeathFailed(false);
+    setCadenceScore(0);
+    keyIntervalsRef.current = [];
+    digraphTimingsRef.current = {};
+    lastCorrectCharRef.current = '';
+    lastSnapshotCountersRef.current = { total: 0, correct: 0, incorrect: 0 };
+    setTimeout(() => inputRef.current?.focus(), 20);
+  }, []);
+
   // Load new target text helper
   const loadNewText = useCallback((
     selectedMode = mode,
     selectedDiff = difficulty,
     selectedWords = wordCount,
     selectedLang = codeLanguage,
-    selectedPack = wordFrequencyPack
+    selectedPack = wordFrequencyPack,
+    selectedSprintDuration = sprintDuration
   ) => {
     setPreviousRun(null);
-    setSuddenDeathFailed(false);
 
     if (customDrillText) {
       setTargetText(customDrillText);
@@ -316,11 +362,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       setTargetText(getRandomCodeSnippet(selectedLang));
       setQuoteAuthor(null);
     } else if (selectedMode === 'Time') {
-      const poolSize = Math.max(30, Math.min(60, Math.round(sprintDuration * 1.2)));
-      const stream = Array.from({ length: poolSize }, () =>
-        SPRINT_WORDS[Math.floor(Math.random() * SPRINT_WORDS.length)]
-      ).join(' ');
-      setTargetText(stream);
+      setTargetText(generateSprintStream(selectedSprintDuration));
       setQuoteAuthor(null);
     } else if (selectedMode === 'Quotes') {
       const quoteObj = getRandomQuote();
@@ -338,72 +380,37 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       setQuoteAuthor(null);
     }
 
-    setWordIndex(0);
-    setTypedWords([]);
-    setCurrentInput('');
-    setStartTime(null);
-    setEndTime(null);
-    setIsFinished(false);
-    setTotalKeystrokes(0);
-    setCorrectKeystrokes(0);
-    setIncorrectKeystrokes(0);
-    setStreak(0);
-    setMistypedKeysMap({});
-    setSmoothedNetWpm(0);
-    setSmoothedGrossWpm(0);
-    setSnapshots([]);
-    setLastSnapshotSec(0);
-    setTimeout(() => inputRef.current?.focus(), 20);
-  }, [mode, difficulty, wordCount, sprintDuration, codeLanguage, wordFrequencyPack, customDrillText]);
+    resetSessionState();
+  }, [mode, difficulty, wordCount, sprintDuration, codeLanguage, wordFrequencyPack, customDrillText, resetSessionState]);
+
+  const handleSprintDurationChange = useCallback((dur: number) => {
+    if (customDrillText && onClearCustomDrill) {
+      onClearCustomDrill();
+    }
+    setSprintDuration(dur);
+    try { localStorage.setItem(STORAGE_KEYS.SPRINT_DURATION, String(dur)); } catch {}
+    if (mode === 'Time') {
+      loadNewText('Time', difficulty, wordCount, codeLanguage, wordFrequencyPack, dur);
+    }
+  }, [mode, difficulty, wordCount, codeLanguage, wordFrequencyPack, loadNewText, customDrillText, onClearCustomDrill]);
 
   const handleCodeLanguageChange = useCallback((lang: CodeLanguage) => {
     setCodeLanguage(lang);
     if (mode === 'Code') {
-      setPreviousRun(null);
       setTargetText(getRandomCodeSnippet(lang));
       setQuoteAuthor(null);
-      setWordIndex(0);
-      setTypedWords([]);
-      setCurrentInput('');
-      setStartTime(null);
-      setEndTime(null);
-      setIsFinished(false);
-      setTotalKeystrokes(0);
-      setCorrectKeystrokes(0);
-      setIncorrectKeystrokes(0);
-      setStreak(0);
-      setMistypedKeysMap({});
-      setSmoothedNetWpm(0);
-      setSmoothedGrossWpm(0);
-      setSnapshots([]);
-      setTimeout(() => inputRef.current?.focus(), 20);
+      resetSessionState({ clearPreviousRun: true });
     }
-  }, [mode]);
+  }, [mode, resetSessionState]);
 
   const handleWordFrequencyPackChange = useCallback((pack: WordFrequencyPack) => {
     setWordFrequencyPack(pack);
     if (mode === 'Words') {
-      setPreviousRun(null);
       setTargetText(getRandomVocabWords(pack, wordCount));
       setQuoteAuthor(null);
-      setWordIndex(0);
-      setTypedWords([]);
-      setCurrentInput('');
-      setStartTime(null);
-      setEndTime(null);
-      setIsFinished(false);
-      setTotalKeystrokes(0);
-      setCorrectKeystrokes(0);
-      setIncorrectKeystrokes(0);
-      setStreak(0);
-      setMistypedKeysMap({});
-      setSmoothedNetWpm(0);
-      setSmoothedGrossWpm(0);
-      setSnapshots([]);
-      setLastCompletedRecord(null);
-      setTimeout(() => inputRef.current?.focus(), 20);
+      resetSessionState({ clearPreviousRun: true, clearLastRecord: true });
     }
-  }, [mode, wordCount]);
+  }, [mode, wordCount, resetSessionState]);
 
   const handleAmbientSoundscapeChange = useCallback((soundscape: AmbientSoundscape) => {
     setAmbientSoundscape(soundscape);
@@ -429,24 +436,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       setMode('Custom');
       setTargetText(customDrillText);
       setQuoteAuthor(null);
-      setWordIndex(0);
-      setTypedWords([]);
-      setCurrentInput('');
-      setStartTime(null);
-      setEndTime(null);
-      setIsFinished(false);
-      setTotalKeystrokes(0);
-      setCorrectKeystrokes(0);
-      setIncorrectKeystrokes(0);
-      setStreak(0);
-      setMistypedKeysMap({});
-      setSmoothedNetWpm(0);
-      setSmoothedGrossWpm(0);
-      setSnapshots([]);
-      setLastSnapshotSec(0);
+      resetSessionState();
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [customDrillText]);
+  }, [customDrillText, resetSessionState]);
 
   // Live timer interval & cadence decay (if typing stops for >1.5s, streak fades out)
   useEffect(() => {
@@ -488,16 +481,26 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     return () => clearInterval(metronomeInterval);
   }, [isMetronome, startTime, isFinished, metronomePace]);
 
-  // Snapshot telemetry for second-by-second analytics chart
+  // Snapshot telemetry: true per-second velocity slices (chars typed in that second),
+  // not cumulative averages, so the results waveform shows real pacing fluctuations
+  const lastSnapshotCountersRef = useRef({ total: 0, correct: 0, incorrect: 0 });
   useEffect(() => {
     if (!startTime || isFinished) return;
     const currentSec = Math.floor(elapsedSeconds);
     if (currentSec > lastSnapshotSec && currentSec >= 1) {
+      const prev = lastSnapshotCountersRef.current;
+      const deltaTotal = Math.max(0, totalKeystrokes - prev.total);
+      const deltaCorrect = Math.max(0, correctKeystrokes - prev.correct);
+      const deltaErrors = Math.max(0, incorrectKeystrokes - prev.incorrect);
+      lastSnapshotCountersRef.current = {
+        total: totalKeystrokes,
+        correct: correctKeystrokes,
+        incorrect: incorrectKeystrokes
+      };
       setLastSnapshotSec(currentSec);
-      const rawNet = calculateNetWpm(correctKeystrokes, incorrectKeystrokes, currentSec);
-      const rawGross = calculateGrossWpm(totalKeystrokes, currentSec);
-      const rawErrors = incorrectKeystrokes;
-      setSnapshots(prev => [...prev, { second: currentSec, wpm: rawNet, raw: rawGross, errors: rawErrors }]);
+      const sliceNet = Math.round((deltaCorrect / 5) * 60);
+      const sliceGross = Math.round((deltaTotal / 5) * 60);
+      setSnapshots(prevSnaps => [...prevSnaps, { second: currentSec, wpm: sliceNet, raw: sliceGross, errors: deltaErrors }]);
     }
   }, [elapsedSeconds, lastSnapshotSec, startTime, isFinished, correctKeystrokes, incorrectKeystrokes, totalKeystrokes]);
 
@@ -516,12 +519,31 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
   const liveAccuracy = calculateAccuracy(correctKeystrokes, totalKeystrokes);
 
-  // Compute ghost racer position based on previous run Net WPM
+  // Pacer ghost speed: 'auto' = +5 WPM above the user's average valid session
+  const pacerGhostWpm = useMemo<number | null>(() => {
+    if (pacerMode === 'Off') return null;
+    if (pacerMode === 'auto') {
+      try {
+        const stored = localStorage.getItem('keywarp_records') || localStorage.getItem('typepulse_records');
+        const recs = stored ? JSON.parse(stored) : [];
+        const valid = Array.isArray(recs)
+          ? recs.filter((r: TypingRecord) => r && !r.isDisqualified && typeof r.netWpm === 'number' && r.netWpm > 0)
+          : [];
+        if (valid.length === 0) return 60;
+        return Math.round(valid.reduce((acc: number, r: TypingRecord) => acc + r.netWpm, 0) / valid.length) + 5;
+      } catch {
+        return 60;
+      }
+    }
+    return pacerMode as number;
+  }, [pacerMode, lastCompletedRecord]);
+
+  // Compute ghost racer position: challenge target > previous run > pacer ghost
   const ghostPosition = useMemo(() => {
-    if (!showGhost || !previousRun || !startTime || isFinished) {
+    const ghostWpm = activeChallenge?.fromWpm || previousRun?.netWpm || pacerGhostWpm;
+    if (!showGhost || !ghostWpm || !startTime || isFinished) {
       return { wordIdx: -1, charOffset: -1 };
     }
-    const ghostWpm = previousRun.netWpm || 60;
     const ghostCharsPerSec = (ghostWpm * 5) / 60;
     const totalGhostChars = Math.floor(elapsedSeconds * ghostCharsPerSec);
 
@@ -535,7 +557,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       runningChars += wordLen + 1; // account for space
     }
     return { wordIdx: words.length - 1, charOffset: words[words.length - 1]?.length || 0 };
-  }, [showGhost, previousRun, startTime, isFinished, elapsedSeconds, words]);
+  }, [showGhost, previousRun, pacerGhostWpm, activeChallenge, startTime, isFinished, elapsedSeconds, words]);
 
   // Finish session helper
   const finishSession = useCallback((overrides?: {
@@ -574,6 +596,12 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       .map(([k, count]) => `${k}:${count}`)
       .join(';');
 
+    // Real cadence telemetry: rhythm consistency, digraph latency, hand balance
+    const cadenceConsistency = calculateCadenceConsistency(keyIntervalsRef.current);
+    const digraphStr = serializeDigraphStats(digraphTimingsRef.current);
+    const typedAllText = typedWords.join(' ') + (currentInput ? ' ' + currentInput : '');
+    const handBalance = computeHandBalance(typedAllText);
+
     const newRecord: TypingRecord = {
       id: `${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       timestamp: new Date().toISOString(),
@@ -588,7 +616,11 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       totalErrors: effectiveIncorrect,
       mistypedKeys: mistypedStr || (isFailedSD ? 'Fatal mistake:1' : 'None'),
       isDisqualified: isFailedSD || durationSec < 3 || effectiveTotal < 15,
-      isSuddenDeathFailed: isFailedSD
+      isSuddenDeathFailed: isFailedSD,
+      cadenceConsistency: cadenceConsistency > 0 ? cadenceConsistency : undefined,
+      digraphLatency: digraphStr || undefined,
+      leftHandChars: handBalance.leftChars,
+      rightHandChars: handBalance.rightChars
     };
 
     try {
@@ -609,30 +641,15 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     sprintDuration,
     wordCount,
     difficulty,
+    typedWords,
+    currentInput,
     onSessionComplete
   ]);
 
   // Repeat current passage helper
   const repeatCurrentPassage = useCallback(() => {
-    setWordIndex(0);
-    setTypedWords([]);
-    setCurrentInput('');
-    setStartTime(null);
-    setEndTime(null);
-    setIsFinished(false);
-    setTotalKeystrokes(0);
-    setCorrectKeystrokes(0);
-    setIncorrectKeystrokes(0);
-    setStreak(0);
-    setMistypedKeysMap({});
-    setSmoothedNetWpm(0);
-    setSmoothedGrossWpm(0);
-    setSnapshots([]);
-    setLastSnapshotSec(0);
-    setSuddenDeathFailed(false);
-    setLastCompletedRecord(null);
-    setTimeout(() => inputRef.current?.focus(), 20);
-  }, []);
+    resetSessionState({ clearLastRecord: true });
+  }, [resetSessionState]);
 
   // Keystroke input processor
   const handleCharInput = useCallback((char: string) => {
@@ -657,6 +674,20 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     if (isCorrect) {
       soundEngine.playKey(soundProfile, false, false);
       setCorrectKeystrokes(prev => prev + 1);
+
+      // Real keystroke telemetry: inter-key interval + digraph (bigram) timing
+      const interval = lastKeyTimeRef.current > 0 ? currentNow - lastKeyTimeRef.current : 0;
+      if (interval > 0 && interval < 2000) {
+        if (keyIntervalsRef.current.length >= 800) keyIntervalsRef.current.shift();
+        keyIntervalsRef.current.push(interval);
+        if (lastCorrectCharRef.current) {
+          recordDigraphTiming(digraphTimingsRef.current, lastCorrectCharRef.current + char, interval);
+        }
+        // Live cadence consistency from the most recent keystroke intervals
+        setCadenceScore(calculateCadenceConsistency(keyIntervalsRef.current.slice(-40)));
+      }
+      lastCorrectCharRef.current = char;
+
       setStreak(prev => {
         const nextStreak = prev + 1;
         if (nextStreak > 0 && nextStreak % 50 === 0) {
@@ -668,6 +699,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       soundEngine.playKey(soundProfile, false, true);
       setStreak(0);
       setLastMistakeKey(char);
+      lastCorrectCharRef.current = '';
 
       // Track weak word
       if (activeWord) {
@@ -713,8 +745,8 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     const rawNet = calculateNetWpm(correctKeystrokes + (isCorrect ? 1 : 0), incorrectKeystrokes + (!isCorrect ? 1 : 0), currentDurationSec);
     const rawGross = calculateGrossWpm(totalKeystrokes + 1, currentDurationSec);
 
-    setSmoothedNetWpm(prev => calculateSmoothedWpm(prev, rawNet, currentDurationSec));
-    setSmoothedGrossWpm(prev => calculateSmoothedWpm(prev, rawGross, currentDurationSec));
+    setSmoothedNetWpm(prev => calculateSmoothedWpm(rawNet, prev, currentDurationSec));
+    setSmoothedGrossWpm(prev => calculateSmoothedWpm(rawGross, prev, currentDurationSec));
 
     lastKeyTimeRef.current = currentNow;
 
@@ -813,6 +845,15 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
         return;
       }
 
+      // While a modal is open, arena shortcuts must not fire; Escape closes the custom-text modal
+      if (isCustomModalOpen || isSettingsModalOpen) {
+        if (e.key === 'Escape' && isCustomModalOpen) {
+          e.preventDefault();
+          setIsCustomModalOpen(false);
+        }
+        return;
+      }
+
       if (e.key === 'Tab') {
         e.preventDefault();
         loadNewText();
@@ -847,18 +888,13 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
-        secretCookieBufferRef.current = (secretCookieBufferRef.current + e.key.toLowerCase()).slice(-6);
-        if (secretCookieBufferRef.current.endsWith('cookie') || secretCookieBufferRef.current.endsWith('baker')) {
-          secretCookieBufferRef.current = '';
-          handleToggleCookie();
-        }
         handleCharInput(e.key);
       }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isActiveTab, loadNewText, repeatCurrentPassage, isFinished, handleBackspace, handleSpace, handleCharInput, handleToggleCookie]);
+  }, [isActiveTab, loadNewText, repeatCurrentPassage, isFinished, handleBackspace, handleSpace, handleCharInput, isCustomModalOpen, isSettingsModalOpen]);
 
   // Mobile Touch Input Handler
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -889,31 +925,34 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     e.preventDefault();
     if (!customInputText.trim()) return;
     const parsed = parseCodeForTyping(customInputText);
-    setPreviousRun(null);
     setMode('Custom');
     try { localStorage.setItem(STORAGE_KEYS.MODE, 'Custom'); } catch {}
     setTargetText(parsed.cleanText);
     setQuoteAuthor(null);
-    setWordIndex(0);
-    setTypedWords([]);
-    setCurrentInput('');
-    setStartTime(null);
-    setEndTime(null);
-    setIsFinished(false);
-    setTotalKeystrokes(0);
-    setCorrectKeystrokes(0);
-    setIncorrectKeystrokes(0);
-    setStreak(0);
-    setMistypedKeysMap({});
-    setSmoothedNetWpm(0);
-    setSmoothedGrossWpm(0);
-    setSnapshots([]);
+    resetSessionState({ clearPreviousRun: true });
     setIsCustomModalOpen(false);
-    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const activeTargetWord = words[wordIndex] || '';
   const activeExpectedChar = activeTargetWord[currentInput.length] || 'space';
+
+  // Keep Tab cycling inside modals instead of leaking focus to the page behind them
+  const trapModalTabKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab') return;
+    const focusables = e.currentTarget.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input, textarea, select, a[href], [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
     <div
@@ -924,7 +963,13 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       {/* Custom Text / Code File Import Modal */}
       {isCustomModalOpen ? (
         <div className="fixed inset-0 z-50 bg-bg/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="w-full max-w-lg rounded-xl border border-ink-400/20 bg-surface p-4 sm:p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 font-sans max-h-[90vh] overflow-y-auto">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Custom code and text practice"
+            onKeyDown={trapModalTabKey}
+            className="w-full max-w-lg rounded-xl border border-ink-400/20 bg-surface p-4 sm:p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 font-sans max-h-[90vh] overflow-y-auto"
+          >
             <div className="flex items-center justify-between border-b border-ink-400/10 pb-3">
               <div className="flex items-center gap-2">
                 <Code2 className="w-4 h-4 text-accent" />
@@ -944,8 +989,10 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             <form onSubmit={handleCustomSubmit} className="space-y-3">
               <p className="text-xs text-ink-400 font-sans">
                 Paste code, markdown, or text—or drop a source code file (`.ts`, `.py`, `.rs`, `.sql`, etc.) to generate instant typing drills.
+                <span className="text-ink-400/70"> Note: the word-buffered engine flattens indentation and newlines into a single word stream.</span>
               </p>
               <textarea
+                autoFocus
                 value={customInputText}
                 onChange={(e) => setCustomInputText(e.target.value)}
                 placeholder="Paste code or custom passage here..."
@@ -1090,6 +1137,8 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           isSuddenDeath={isSuddenDeath}
           isMetronome={isMetronome}
           metronomePace={metronomePace}
+          pacerMode={pacerMode}
+          pacerAutoWpm={pacerGhostWpm ?? 60}
           onModeChange={(m) => {
             if (customDrillText && onClearCustomDrill) {
               onClearCustomDrill();
@@ -1106,14 +1155,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             try { localStorage.setItem(STORAGE_KEYS.DIFFICULTY, d); } catch {}
             loadNewText('Passage', d, wordCount);
           }}
-          onSprintDurationChange={(dur) => {
-            if (customDrillText && onClearCustomDrill) {
-              onClearCustomDrill();
-            }
-            setSprintDuration(dur);
-            try { localStorage.setItem(STORAGE_KEYS.SPRINT_DURATION, String(dur)); } catch {}
-            loadNewText('Time', difficulty, wordCount);
-          }}
+          onSprintDurationChange={handleSprintDurationChange}
           onWordCountChange={(count) => {
             if (customDrillText && onClearCustomDrill) {
               onClearCustomDrill();
@@ -1136,7 +1178,9 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           onToggleSuddenDeath={() => setIsSuddenDeath(prev => !prev)}
           onToggleMetronome={() => setIsMetronome(prev => !prev)}
           onChangeMetronomePace={setMetronomePace}
+          onPacerModeChange={setPacerMode}
           onOpenCustomModal={() => setIsCustomModalOpen(true)}
+          onSettingsModalOpenChange={setIsSettingsModalOpen}
         />
       ) : null}
 
@@ -1164,6 +1208,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           sprintRemainingSeconds={sprintRemainingSeconds}
           progressPercent={progressPercent}
           isCookieMode={Boolean(isCookieMode)}
+          cadenceConsistency={cadenceScore}
         />
       ) : null}
 
@@ -1259,6 +1304,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
                 return (
                   <WordSpan
                     key={idx}
+                    id={`word-${idx}`}
                     targetWord={targetWord}
                     typedWord={typedWord}
                     isCurrentWord={isCurrent}
@@ -1315,6 +1361,12 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
 
             <div className="flex items-center gap-3">
               <span className="hidden sm:inline text-ink-400/50">tab to restart • shift+enter to repeat</span>
+              {pacerGhostWpm !== null && !previousRun && !activeChallenge ? (
+                <span className="hidden sm:inline text-ink-400 flex items-center gap-1" title="Pacer ghost active — configured in settings">
+                  <Ghost className="w-3.5 h-3.5 text-accent/70" />
+                  <span>pacer {pacerGhostWpm} wpm</span>
+                </span>
+              ) : null}
               {zenMode && (
                 <button
                   type="button"
@@ -1354,25 +1406,9 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           onOpenCoach={onOpenCoach}
           onOpenTour={onOpenTour}
           onPracticeMistakes={(mistakeText) => {
-            setPreviousRun(null);
             setTargetText(mistakeText);
             setQuoteAuthor(null);
-            setWordIndex(0);
-            setTypedWords([]);
-            setCurrentInput('');
-            setStartTime(null);
-            setEndTime(null);
-            setIsFinished(false);
-            setTotalKeystrokes(0);
-            setCorrectKeystrokes(0);
-            setIncorrectKeystrokes(0);
-            setStreak(0);
-            setMistypedKeysMap({});
-            setSmoothedNetWpm(0);
-            setSmoothedGrossWpm(0);
-            setSnapshots([]);
-            setLastCompletedRecord(null);
-            setTimeout(() => inputRef.current?.focus(), 50);
+            resetSessionState({ clearPreviousRun: true, clearLastRecord: true });
           }}
         />
       )}

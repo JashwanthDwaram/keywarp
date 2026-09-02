@@ -16,7 +16,11 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themeId, setThemeIdState] = useState<string>(() => {
-    return localStorage.getItem('keywarp_theme') || localStorage.getItem('typepulse_theme') || 'earth-minimal';
+    try {
+      return localStorage.getItem('keywarp_theme') || localStorage.getItem('typepulse_theme') || 'earth-minimal';
+    } catch {
+      return 'earth-minimal';
+    }
   });
 
   const [isCookieUnlocked, setIsCookieUnlocked] = useState<boolean>(() => {
@@ -32,10 +36,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setThemeId = (id: string) => {
     if (THEMES[id]) {
       setThemeIdState(id);
-      localStorage.setItem('keywarp_theme', id);
-      if (id !== 'warm-cookie') {
-        localStorage.setItem('keywarp_prev_theme', id);
-      }
+      try {
+        localStorage.setItem('keywarp_theme', id);
+        if (id !== 'warm-cookie') {
+          localStorage.setItem('keywarp_prev_theme', id);
+        }
+      } catch {}
       trackThemeChange(id);
     }
   };
@@ -49,7 +55,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } catch {}
     setThemeIdState('warm-cookie');
-    localStorage.setItem('keywarp_theme', 'warm-cookie');
+    try {
+      localStorage.setItem('keywarp_theme', 'warm-cookie');
+    } catch {}
     trackThemeChange('warm-cookie');
   };
 
@@ -60,7 +68,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (prev === 'warm-cookie') prev = 'earth-minimal';
     } catch {}
     setThemeIdState(prev);
-    localStorage.setItem('keywarp_theme', prev);
+    try {
+      localStorage.setItem('keywarp_theme', prev);
+    } catch {}
     trackThemeChange(prev);
   };
 

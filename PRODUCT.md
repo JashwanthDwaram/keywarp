@@ -20,7 +20,7 @@ KeyWarp is a modern, self-contained typing trainer and analytics platform. It pr
 
 ## Positioning
 
-Unlike conventional online typing tests that offer fleeting results, KeyWarp combines offline-capable real-time typing with AI-native coaching primitives (Thinking states, tool execution telemetry, and human-in-the-loop adaptive drill approval cards) alongside persistent CSV/browser session analytics.
+Unlike conventional online typing tests that offer fleeting results, KeyWarp combines offline-capable real-time typing with AI-powered coaching (server-side Gemini diagnostics with an offline heuristic fallback) alongside persistent local session analytics and real keystroke-interval telemetry (digraph latency, rhythm consistency, hand balance).
 
 ## Operating Context
 
@@ -33,8 +33,9 @@ Keyboard-driven desktop browser sessions (and desktop Pygame window), rapid iter
 - **Real-Time Live Validation**: Character-level color highlighting (Emerald correct, Red incorrect with background highlight, Slate pending, Glowing caret).
 - **Accurate Metric Calculations**: Gross WPM, standard Net WPM (penalizing uncorrected errors), and keystroke accuracy percentage.
 - **Mistake Matrix & Error Tracking**: Maps exact character mis-hits to aggregate frequently mistyped keys.
-- **AI Typing Coach**: Leverages BeautifulUI primitives (Thinking State, Tool Chips, and Approval Cards) to synthesize adaptive muscle-memory drills.
-- **Data Persistence**: CSV export and local history tracking across sessions.
+- **AI Typing Coach**: Gemini-powered diagnostics (via the serverless `/api/coach` proxy) synthesize adaptive muscle-memory drills, with a procedural offline fallback.
+- **Real Keystroke Telemetry**: Per-bigram latency, cadence consistency, and hand-balance measurements recorded per session.
+- **Data Persistence**: JSON/CSV export and local history tracking across sessions.
 
 ## Brand Commitments
 
@@ -45,10 +46,10 @@ Keyboard-driven desktop browser sessions (and desktop Pygame window), rapid iter
 
 ## Evidence on Hand
 
-- Passage repository: `data/passages.json` & `web/src/data/passages.ts`
-- Word bank: `data/words.txt` & `SPRINT_WORDS`
-- Persistent session storage: `data/typing_history.csv`
-- Automated test suite: `tests/test_typing_logic.py`
+- Web passage repository: `src/data/passages.ts`
+- Word bank: `desktop/data/words.txt` & `SPRINT_WORDS`
+- Desktop session storage: `desktop/data/typing_history.csv`
+- Desktop test suite: `desktop/tests/test_typing_logic.py`
 
 ## Product Principles
 

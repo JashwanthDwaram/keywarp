@@ -27,9 +27,13 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Disqualified runs (too short, too few keystrokes, sudden-death fails) must never
+  // pollute PBs, averages, trends, or achievements. Raw records are still exported/tabled.
+  const validRecords = useMemo(() => records.filter(r => !r.isDisqualified), [records]);
+
   // Summary KPIs derived synchronously during render
   const stats = useMemo(() => {
-    const count = records.length;
+    const count = validRecords.length;
     if (count === 0) {
       return {
         totalSessions: 0,
@@ -44,11 +48,11 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
       };
     }
 
-    const bestWpm = Math.max(...records.map(r => r.netWpm));
-    const avgWpm = Math.round((records.reduce((acc, r) => acc + r.netWpm, 0) / count) * 10) / 10;
-    const avgAcc = Math.round((records.reduce((acc, r) => acc + r.accuracy, 0) / count) * 10) / 10;
-    const totalWords = records.reduce((acc, r) => acc + Math.floor(r.charactersTyped / 5), 0);
-    const totalSecs = records.reduce((acc, r) => acc + r.timeSeconds, 0);
+    const bestWpm = Math.max(...validRecords.map(r => r.netWpm));
+    const avgWpm = Math.round((validRecords.reduce((acc, r) => acc + r.netWpm, 0) / count) * 10) / 10;
+    const avgAcc = Math.round((validRecords.reduce((acc, r) => acc + r.accuracy, 0) / count) * 10) / 10;
+    const totalWords = validRecords.reduce((acc, r) => acc + Math.floor(r.charactersTyped / 5), 0);
+    const totalSecs = validRecords.reduce((acc, r) => acc + r.timeSeconds, 0);
     const totalMins = Math.round((totalSecs / 60) * 10) / 10;
 
     let trendValue = count < 5 ? `${count}/5 tests` : '±0.0 wpm';
@@ -56,8 +60,8 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
     let deltaBadge: { value: string; isPositive?: boolean; isNeutral?: boolean } | undefined = undefined;
 
     if (count >= 5) {
-      const first3Avg = records.slice(0, 3).reduce((acc, r) => acc + r.netWpm, 0) / 3;
-      const last3Avg = records.slice(-3).reduce((acc, r) => acc + r.netWpm, 0) / 3;
+      const first3Avg = validRecords.slice(0, 3).reduce((acc, r) => acc + r.netWpm, 0) / 3;
+      const last3Avg = validRecords.slice(-3).reduce((acc, r) => acc + r.netWpm, 0) / 3;
       const diff = Math.round((last3Avg - first3Avg) * 10) / 10;
       trendSubtitle = `${totalMins}m practice time`;
 
@@ -84,7 +88,7 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
       trendSubtitle,
       deltaBadge
     };
-  }, [records]);
+  }, [validRecords]);
 
   const handleConfirmReset = () => {
     if (onResetRecords) {
@@ -239,18 +243,18 @@ export const AnalyticsHub: React.FC<AnalyticsHubProps> = ({
 
       {/* Visual Charts Grid: Trajectory & Mistake Matrix */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ProgressionChart records={records} />
-        <MistakeMatrix records={records} />
+        <ProgressionChart records={validRecords} />
+        <MistakeMatrix records={validRecords} />
       </div>
 
       {/* Biomechanical Finger Diagnostics */}
-      <FingerDiagnostics records={records} />
+      <FingerDiagnostics records={validRecords} />
 
       {/* Biomechanical Keyboard Heatmap & Daily Practice Streak */}
-      <BiomechanicalKeyboardHeatmap records={records} />
+      <BiomechanicalKeyboardHeatmap records={validRecords} />
 
       {/* Milestones & Achievements Grid */}
-      <AchievementsGrid records={records} />
+      <AchievementsGrid records={validRecords} />
 
       {/* Session Records Table */}
       <SessionHistoryTable records={records} />

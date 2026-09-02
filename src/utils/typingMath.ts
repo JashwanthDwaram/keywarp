@@ -119,3 +119,82 @@ export function getPaceDescription(wpm: number): string {
   if (wpm >= 20) return 'Warming Up';
   return 'Ready';
 }
+
+/**
+ * Computes a 0-100 cadence consistency score from inter-keystroke intervals (ms).
+ * 100 = perfectly even rhythm; score falls as interval variability (coefficient of
+ * variation) grows. Intervals above `maxIntervalMs` (long pauses/thinking gaps) are
+ * ignored so natural hesitation between words doesn't dominate the metric.
+ */
+export function calculateCadenceConsistency(intervals: number[], maxIntervalMs: number = 1500): number {
+  const samples = intervals.filter(ms => ms > 0 && ms < maxIntervalMs);
+  if (samples.length < 5) return 0;
+  const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
+  if (mean <= 0) return 0;
+  const variance = samples.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / samples.length;
+  const coefficientOfVariation = Math.sqrt(variance) / mean;
+  const score = Math.round(Math.max(0, Math.min(100, 100 - coefficientOfVariation * 100)));
+  return score;
+}
+
+export interface DigraphStat {
+  pair: string;
+  avgMs: number;
+  count: number;
+}
+
+/** Internal accumulator shape for per-bigram timing sums. */
+export type DigraphTimings = Record<string, { sum: number; count: number }>;
+
+export const recordDigraphTiming = (timings: DigraphTimings, pair: string, intervalMs: number): void => {
+  if (!pair || pair.length !== 2) return;
+  const entry = timings[pair];
+  if (entry) {
+    entry.sum += intervalMs;
+    entry.count += 1;
+  } else {
+    timings[pair] = { sum: intervalMs, count: 1 };
+  }
+};
+
+/**
+ * Serializes the fastest `fastLimit` and slowest `slowLimit` digraphs (with at least
+ * `minCount` samples) into the compact "th:62;he:71" record format.
+ */
+export const serializeDigraphStats = (
+  timings: DigraphTimings,
+  fastLimit: number = 8,
+  slowLimit: number = 6,
+  minCount: number = 2
+): string => {
+  const stats: DigraphStat[] = Object.entries(timings)
+    .filter(([, v]) => v.count >= minCount)
+    .map(([pair, v]) => ({ pair, avgMs: Math.round(v.sum / v.count), count: v.count }))
+    .sort((a, b) => a.avgMs - b.avgMs);
+
+  const fastest = stats.slice(0, fastLimit);
+  const slowest = stats.slice(-slowLimit);
+  const seen = new Set<string>();
+  const entries: string[] = [];
+  [...fastest, ...slowest].forEach(s => {
+    if (!seen.has(s.pair)) {
+      seen.add(s.pair);
+      entries.push(`${s.pair}:${s.avgMs}`);
+    }
+  });
+  return entries.join(';');
+};
+
+/** Parses the compact digraph record format back into stats. */
+export const parseDigraphStats = (serialized: string | undefined): DigraphStat[] => {
+  if (!serialized || serialized === 'None') return [];
+  const stats: DigraphStat[] = [];
+  serialized.split(';').forEach(pair => {
+    const [p, msStr] = pair.split(':');
+    const avgMs = parseInt(msStr, 10);
+    if (p && p.length === 2 && !isNaN(avgMs) && avgMs > 0) {
+      stats.push({ pair: p, avgMs, count: 1 });
+    }
+  });
+  return stats;
+};
