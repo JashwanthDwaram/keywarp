@@ -1,21 +1,21 @@
-# Node
+# Dependencies & Builds
 node_modules/
 dist/
 .vite/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Environment Variables & Keys
+# Environment Variables (Keep .env.example tracked)
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # Vercel
 .vercel
 
-# Python
+# Python cache & virtual environments
 __pycache__/
+*.py[cod]
+*$py.class
 *.pyc
 *.pyo
 *.pyd
@@ -24,7 +24,14 @@ env/
 venv/
 .venv/
 
-# OS / Editor
+# Scratch & Temporary
+scratch/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS & Editor Files
 .DS_Store
 Thumbs.db
 *.swp
@@ -32,12 +39,12 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Agent & AI tool metadata
+# AI assistant & agent metadata directories
 .agent/
 .agents/
 .codex/
 .cursor/
 .gemini/
 .impeccable/
-skills-lock.json
 .zcode/
+skills-lock.json

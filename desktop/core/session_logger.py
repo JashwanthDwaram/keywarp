@@ -1,106 +1,122 @@
 """
-Session Logger module.
-Manages persistent CSV storage for typing sessions and provides history retrieval.
+Session Logger Module for KeyWarp Desktop.
+Handles saving completed test sessions to CSV and JSON,
+retrieving past history, and using Tkinter for native file export dialogs.
 """
 
 import os
 import csv
-from datetime import datetime
-from typing import List, Dict, Optional
-import pandas as pd
-from config.constants import CSV_FILE_PATH
+import json
+from typing import List, Dict, Any, Optional
 
-CSV_HEADERS = [
-    "timestamp",
-    "mode",
-    "difficulty",
-    "passage_length",
-    "characters_typed",
-    "time_seconds",
-    "gross_wpm",
-    "net_wpm",
-    "accuracy",
-    "total_errors",
-    "mistyped_keys"
+DEFAULT_CSV_HEADERS = [
+    "date", "mode", "difficulty", "net_wpm", "gross_wpm",
+    "cpm", "accuracy", "time_seconds", "characters_typed",
+    "correct_keystrokes", "total_errors", "mistyped_keys"
 ]
 
 
 class SessionLogger:
-    def __init__(self, filepath: str = CSV_FILE_PATH):
-        self.filepath = filepath
-        self._ensure_csv_file()
+    def __init__(self, data_dir: Optional[str] = None):
+        if data_dir is None:
+            data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+        self.data_dir = data_dir
+        os.makedirs(self.data_dir, exist_ok=True)
 
-    def _ensure_csv_file(self) -> None:
-        """Ensures directory and CSV file with headers exist."""
-        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
-        if not os.path.exists(self.filepath) or os.path.getsize(self.filepath) == 0:
-            with open(self.filepath, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow(CSV_HEADERS)
+        self.json_path = os.path.join(self.data_dir, "typing_history.json")
+        self.csv_path = os.path.join(self.data_dir, "typing_history.csv")
 
-    def log_session(self, summary: Dict) -> bool:
-        """Appends a session summary to the CSV file."""
+    def log_session(self, summary: Dict[str, Any]) -> bool:
+        """Appends a completed session summary to JSON and CSV history files."""
         try:
-            self._ensure_csv_file()
-            row = [
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                summary.get("mode", "Passage"),
-                summary.get("difficulty", "Medium"),
-                summary.get("passage_length", 0),
-                summary.get("characters_typed", 0),
-                summary.get("time_seconds", 0.0),
-                summary.get("gross_wpm", 0.0),
-                summary.get("net_wpm", 0.0),
-                summary.get("accuracy", 0.0),
-                summary.get("total_errors", 0),
-                summary.get("mistyped_keys", "None")
-            ]
-            with open(self.filepath, "a", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow(row)
+            # 1. Append to JSON
+            history = self.get_history()
+            history.append(summary)
+            with open(self.json_path, "w", encoding="utf-8") as f:
+                json.dump(history, f, indent=2)
+
+            # 2. Append to CSV
+            file_exists = os.path.exists(self.csv_path) and os.path.getsize(self.csv_path) > 0
+            with open(self.csv_path, "a", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=DEFAULT_CSV_HEADERS, extrasaction="ignore")
+                if not file_exists:
+                    writer.writeheader()
+                writer.writerow(summary)
+
             return True
         except Exception as e:
-            print(f"[SessionLogger] Failed to log session: {e}")
+            print(f"[SessionLogger] Error saving session: {e}")
             return False
 
-    def load_dataframe(self) -> pd.DataFrame:
-        """Loads session history into a Pandas DataFrame."""
-        if not os.path.exists(self.filepath) or os.path.getsize(self.filepath) == 0:
-            return pd.DataFrame(columns=CSV_HEADERS)
+    def get_history(self) -> List[Dict[str, Any]]:
+        """Reads and returns past sessions from JSON file."""
+        if os.path.exists(self.json_path):
+            try:
+                with open(self.json_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        return data
+            except Exception:
+                pass
+        return []
+
+    def clear_history(self) -> bool:
+        """Clears all logged history."""
         try:
-            df = pd.read_csv(self.filepath)
-            if not df.empty and "timestamp" in df.columns:
-                df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-            return df
+            if os.path.exists(self.json_path):
+                with open(self.json_path, "w", encoding="utf-8") as f:
+                    json.dump([], f)
+            if os.path.exists(self.csv_path):
+                with open(self.csv_path, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=DEFAULT_CSV_HEADERS)
+                    writer.writeheader()
+            return True
         except Exception as e:
-            print(f"[SessionLogger] Error reading CSV: {e}")
-            return pd.DataFrame(columns=CSV_HEADERS)
+            print(f"[SessionLogger] Error clearing history: {e}")
+            return False
 
-    def get_recent_sessions(self, limit: int = 10) -> List[Dict]:
-        """Returns the most recent N sessions as dictionaries."""
-        df = self.load_dataframe()
-        if df.empty:
-            return []
-        recent = df.tail(limit).iloc[::-1]  # reverse to get newest first
-        # Format timestamps nicely
-        records = recent.to_dict("records")
-        for r in records:
-            if isinstance(r.get("timestamp"), pd.Timestamp):
-                r["timestamp_str"] = r["timestamp"].strftime("%b %d, %H:%M")
-            else:
-                r["timestamp_str"] = str(r.get("timestamp", ""))
-        return records
+    @staticmethod
+    def export_history_dialog(records: List[Dict[str, Any]]) -> Optional[str]:
+        """
+        Tkinter Integration:
+        Opens native Save File dialog to let the user export their test history
+        to a chosen CSV or JSON file on their system.
+        """
+        if not records:
+            return None
 
-    def get_leaderboard(self, limit: int = 10) -> List[Dict]:
-        """Returns the top N sessions ranked by Net WPM and Accuracy."""
-        df = self.load_dataframe()
-        if df.empty:
-            return []
-        top_df = df.sort_values(by=["net_wpm", "accuracy"], ascending=[False, False]).head(limit)
-        records = top_df.to_dict("records")
-        for r in records:
-            if isinstance(r.get("timestamp"), pd.Timestamp):
-                r["timestamp_str"] = r["timestamp"].strftime("%b %d, %H:%M")
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+
+            save_path = filedialog.asksaveasfilename(
+                title="Export Typing History",
+                defaultextension=".csv",
+                filetypes=[
+                    ("CSV File", "*.csv"),
+                    ("JSON File", "*.json"),
+                    ("All Files", "*.*")
+                ]
+            )
+            root.destroy()
+
+            if not save_path:
+                return None
+
+            if save_path.lower().endswith(".json"):
+                with open(save_path, "w", encoding="utf-8") as f:
+                    json.dump(records, f, indent=2)
             else:
-                r["timestamp_str"] = str(r.get("timestamp", ""))
-        return records
+                with open(save_path, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=DEFAULT_CSV_HEADERS, extrasaction="ignore")
+                    writer.writeheader()
+                    for r in records:
+                        writer.writerow(r)
+
+            return save_path
+        except Exception as e:
+            print(f"[SessionLogger] Tkinter Export error: {e}")
+            return None

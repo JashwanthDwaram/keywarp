@@ -1,214 +1,159 @@
 """
-Reusable UI Components for Pygame.
-Modern slate / indigo design system with rounded corners, hover states, and smooth typography.
+UI Components Module for KeyWarp Desktop.
+Provides reusable Button, MetricCard, ProgressBar, Badge, and FontManager components.
+Supports dynamic scaling factors for responsive window resizing.
 """
 
-import math
-import time
-from typing import Tuple, Optional, Callable, Dict, Any
+from typing import Tuple, Optional, Dict
 import pygame
 from config.constants import (
-    BG_CARD, BG_CARD_HOVER, BG_PANEL, BORDER_SUBTLE, BORDER_ACTIVE,
-    TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM, ACCENT_INDIGO, ACCENT_INDIGO_HOVER,
-    ACCENT_SKY, SUCCESS, ERROR, WARNING, CARET_COLOR
+    BG_CARD, BG_PANEL, BORDER_COLOR, BORDER_ACTIVE,
+    TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM, ACCENT_CYAN,
+    COLOR_CORRECT, COLOR_ERROR
 )
 
 
 class FontManager:
-    _fonts: Dict[str, pygame.font.Font] = {}
+    """Caches fonts by size and type to optimize rendering performance."""
+    _cache: Dict[str, pygame.font.Font] = {}
 
     @classmethod
-    def get_font(cls, size: int = 16, bold: bool = False, mono: bool = False) -> pygame.font.Font:
+    def get_font(cls, size: int, bold: bool = False, mono: bool = False) -> pygame.font.Font:
+        # Clamp font size to sane bounds
+        size = max(9, min(72, size))
         key = f"{size}_{bold}_{mono}"
-        if key not in cls._fonts:
-            if mono:
-                font_name = "Consolas, Courier New, monospace"
-            else:
-                font_name = "Segoe UI, Helvetica, Arial, sans-serif"
-            cls._fonts[key] = pygame.font.SysFont(font_name, size, bold=bold)
-        return cls._fonts[key]
+        if key not in cls._cache:
+            font_candidates = "consolas,cascadiacode,couriernew" if mono else "segoeui,arial,helvetica"
+            cls._cache[key] = pygame.font.SysFont(font_candidates, size, bold=bold)
+        return cls._cache[key]
 
 
 class Button:
+    """Interactive button with hover states and custom variants."""
     def __init__(
         self,
         rect: Tuple[int, int, int, int],
         text: str,
         variant: str = "primary",
-        font_size: int = 16,
-        icon: str = "",
-        callback: Optional[Callable[[], None]] = None,
-        tooltip: str = ""
+        font_size: int = 14
     ):
         self.rect = pygame.Rect(rect)
         self.text = text
         self.variant = variant
         self.font_size = font_size
-        self.icon = icon
-        self.callback = callback
-        self.tooltip = tooltip
         self.is_hovered = False
-        self.border_radius = 8
 
     def update(self, mouse_pos: Tuple[int, int]) -> None:
         self.is_hovered = self.rect.collidepoint(mouse_pos)
 
     def draw(self, surface: pygame.Surface) -> None:
-        # Determine colors based on variant and hover
+        # Determine colors based on variant and hover state
         if self.variant == "primary":
-            bg_color = ACCENT_INDIGO_HOVER if self.is_hovered else ACCENT_INDIGO
-            border_color = ACCENT_SKY if self.is_hovered else BORDER_ACTIVE
-            text_color = TEXT_PRIMARY
+            bg_color = (37, 99, 235) if not self.is_hovered else (59, 130, 246)
+            border_color = ACCENT_CYAN
+            text_color = (255, 255, 255)
         elif self.variant == "secondary":
-            bg_color = BG_CARD_HOVER if self.is_hovered else BG_CARD
-            border_color = BORDER_ACTIVE if self.is_hovered else BORDER_SUBTLE
-            text_color = TEXT_PRIMARY if self.is_hovered else TEXT_MUTED
-        elif self.variant == "success":
-            bg_color = (20, 184, 120) if self.is_hovered else SUCCESS
-            border_color = (52, 211, 153)
-            text_color = TEXT_PRIMARY
-        elif self.variant == "danger":
-            bg_color = (244, 63, 94) if self.is_hovered else ERROR
-            border_color = (251, 113, 133)
+            bg_color = BG_CARD if not self.is_hovered else (71, 85, 105)
+            border_color = BORDER_ACTIVE if self.is_hovered else BORDER_COLOR
             text_color = TEXT_PRIMARY
         elif self.variant == "ghost":
-            bg_color = (40, 53, 75) if self.is_hovered else (0, 0, 0, 0)
-            border_color = BORDER_SUBTLE if self.is_hovered else (0, 0, 0, 0)
-            text_color = TEXT_PRIMARY if self.is_hovered else TEXT_MUTED
+            bg_color = (0, 0, 0, 0) if not self.is_hovered else BG_CARD
+            border_color = BORDER_COLOR if self.is_hovered else (0, 0, 0, 0)
+            text_color = TEXT_MUTED if not self.is_hovered else TEXT_PRIMARY
         else:
             bg_color = BG_CARD
-            border_color = BORDER_SUBTLE
+            border_color = BORDER_COLOR
             text_color = TEXT_PRIMARY
 
-        # Draw button background
-        pygame.draw.rect(surface, bg_color, self.rect, border_radius=self.border_radius)
+        # Draw background and border
+        border_radius = max(6, int(self.rect.height * 0.18))
+        if bg_color != (0, 0, 0, 0):
+            pygame.draw.rect(surface, bg_color, self.rect, border_radius=border_radius)
         if border_color != (0, 0, 0, 0):
-            pygame.draw.rect(surface, border_color, self.rect, width=1, border_radius=self.border_radius)
+            pygame.draw.rect(surface, border_color, self.rect, width=1, border_radius=border_radius)
 
-        # Draw label
+        # Draw button label
         font = FontManager.get_font(self.font_size, bold=True)
-        display_text = f"{self.icon} {self.text}".strip() if self.icon else self.text
-        text_surf = font.render(display_text, True, text_color)
+        text_surf = font.render(self.text, True, text_color)
         text_rect = text_surf.get_rect(center=self.rect.center)
         surface.blit(text_surf, text_rect)
 
-    def handle_event(self, event: pygame.event.Event) -> bool:
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.rect.collidepoint(event.pos):
-                if self.callback:
-                    self.callback()
-                return True
-        return False
 
-
-class Card:
+class MetricCard:
+    """Card displaying a single KPI metric (e.g., WPM, Accuracy, Time)."""
     @staticmethod
     def draw(
         surface: pygame.Surface,
         rect: Tuple[int, int, int, int],
-        bg_color: Tuple[int, int, int] = BG_CARD,
-        border_color: Tuple[int, int, int] = BORDER_SUBTLE,
-        border_radius: int = 12,
-        border_width: int = 1
+        title: str,
+        value: str,
+        subtitle: str = "",
+        accent_color: Tuple[int, int, int] = ACCENT_CYAN,
+        scale: float = 1.0
     ) -> None:
         card_rect = pygame.Rect(rect)
-        pygame.draw.rect(surface, bg_color, card_rect, border_radius=border_radius)
-        if border_width > 0:
-            pygame.draw.rect(surface, border_color, card_rect, width=border_width, border_radius=border_radius)
+        border_radius = max(6, int(10 * scale))
+        pygame.draw.rect(surface, BG_CARD, card_rect, border_radius=border_radius)
+        pygame.draw.rect(surface, BORDER_COLOR, card_rect, width=1, border_radius=border_radius)
+
+        pad_x = int(16 * scale)
+        # Title Label
+        title_font = FontManager.get_font(max(10, int(11 * scale)), bold=True)
+        title_surf = title_font.render(title.upper(), True, TEXT_MUTED)
+        surface.blit(title_surf, (card_rect.x + pad_x, card_rect.y + int(10 * scale)))
+
+        # Main Value
+        val_font = FontManager.get_font(max(18, int(26 * scale)), bold=True)
+        val_surf = val_font.render(value, True, accent_color)
+        surface.blit(val_surf, (card_rect.x + pad_x, card_rect.y + int(28 * scale)))
+
+        # Subtitle Helper
+        if subtitle:
+            sub_font = FontManager.get_font(max(9, int(11 * scale)), bold=False)
+            sub_surf = sub_font.render(subtitle, True, TEXT_DIM)
+            surface.blit(sub_surf, (card_rect.x + pad_x, card_rect.y + card_rect.height - int(20 * scale)))
+
+
+class ProgressBar:
+    """Horizontal progress bar indicating test completion percentage."""
+    @staticmethod
+    def draw(
+        surface: pygame.Surface,
+        rect: Tuple[int, int, int, int],
+        progress: float,
+        fill_color: Tuple[int, int, int] = ACCENT_CYAN
+    ) -> None:
+        bar_rect = pygame.Rect(rect)
+        pygame.draw.rect(surface, (30, 41, 59), bar_rect, border_radius=4)
+
+        clamped_progress = max(0.0, min(1.0, progress))
+        fill_w = int(bar_rect.width * clamped_progress)
+        if fill_w > 0:
+            fill_rect = pygame.Rect(bar_rect.x, bar_rect.y, fill_w, bar_rect.height)
+            pygame.draw.rect(surface, fill_color, fill_rect, border_radius=4)
 
 
 class Badge:
+    """Small pill badge for mode, grade, or version indicators."""
     @staticmethod
     def draw(
         surface: pygame.Surface,
         x: int,
         y: int,
         text: str,
-        bg_color: Tuple[int, int, int] = ACCENT_INDIGO,
-        text_color: Tuple[int, int, int] = TEXT_PRIMARY,
-        font_size: int = 12
+        bg_color: Tuple[int, int, int] = ACCENT_CYAN,
+        text_color: Tuple[int, int, int] = (255, 255, 255),
+        font_size: int = 12,
+        scale: float = 1.0
     ) -> int:
-        """Draws a pill badge and returns badge width."""
         font = FontManager.get_font(font_size, bold=True)
         text_surf = font.render(text, True, text_color)
-        padding_x = 10
-        padding_y = 4
-        w = text_surf.get_width() + padding_x * 2
-        h = text_surf.get_height() + padding_y * 2
-        rect = pygame.Rect(x, y, w, h)
-        pygame.draw.rect(surface, bg_color, rect, border_radius=12)
+        padding_x = max(8, int(10 * scale))
+        padding_y = max(3, int(4 * scale))
+        w = text_surf.get_width() + 2 * padding_x
+        h = text_surf.get_height() + 2 * padding_y
+
+        pill_rect = pygame.Rect(x, y, w, h)
+        pygame.draw.rect(surface, bg_color, pill_rect, border_radius=h // 2)
         surface.blit(text_surf, (x + padding_x, y + padding_y))
         return w
-
-
-class MetricCard:
-    def __init__(
-        self,
-        rect: Tuple[int, int, int, int],
-        title: str,
-        value: str,
-        subtitle: str = "",
-        accent_color: Tuple[int, int, int] = ACCENT_SKY
-    ):
-        self.rect = pygame.Rect(rect)
-        self.title = title
-        self.value = value
-        self.subtitle = subtitle
-        self.accent_color = accent_color
-
-    def draw(self, surface: pygame.Surface) -> None:
-        # Card body
-        Card.draw(surface, self.rect, bg_color=BG_CARD, border_color=BORDER_SUBTLE, border_radius=10)
-        
-        # Subtle top accent bar
-        accent_bar_rect = pygame.Rect(self.rect.x, self.rect.y, self.rect.width, 3)
-        pygame.draw.rect(surface, self.accent_color, accent_bar_rect, border_top_left_radius=10, border_top_right_radius=10)
-
-        # Title
-        font_title = FontManager.get_font(12, bold=True)
-        surf_title = font_title.render(self.title.upper(), True, TEXT_MUTED)
-        surface.blit(surf_title, (self.rect.x + 16, self.rect.y + 12))
-
-        # Value
-        font_val = FontManager.get_font(28, bold=True)
-        surf_val = font_val.render(self.value, True, TEXT_PRIMARY)
-        surface.blit(surf_val, (self.rect.x + 16, self.rect.y + 30))
-
-        # Subtitle
-        if self.subtitle:
-            font_sub = FontManager.get_font(11, bold=False)
-            surf_sub = font_sub.render(self.subtitle, True, TEXT_DIM)
-            surface.blit(surf_sub, (self.rect.x + 16, self.rect.y + 68))
-
-
-class ProgressBar:
-    @staticmethod
-    def draw(
-        surface: pygame.Surface,
-        rect: Tuple[int, int, int, int],
-        progress: float,
-        fill_color: Tuple[int, int, int] = ACCENT_SKY,
-        bg_color: Tuple[int, int, int] = BG_PANEL
-    ) -> None:
-        """Draws rounded progress bar (progress: 0.0 to 1.0)."""
-        bar_rect = pygame.Rect(rect)
-        pygame.draw.rect(surface, bg_color, bar_rect, border_radius=rect[3] // 2)
-        
-        clamped_p = max(0.0, min(1.0, progress))
-        if clamped_p > 0:
-            fill_w = max(rect[3], int(rect[2] * clamped_p))
-            fill_rect = pygame.Rect(rect[0], rect[1], fill_w, rect[3])
-            pygame.draw.rect(surface, fill_color, fill_rect, border_radius=rect[3] // 2)
-
-
-class BlinkingCaret:
-    def __init__(self, blink_rate: float = 0.53):
-        self.blink_rate = blink_rate
-
-    def is_visible(self) -> bool:
-        return (time.time() % (self.blink_rate * 2)) < self.blink_rate
-
-    def draw(self, surface: pygame.Surface, x: int, y: int, height: int, color: Tuple[int, int, int] = CARET_COLOR) -> None:
-        if self.is_visible():
-            caret_rect = pygame.Rect(x, y, 2, height)
-            pygame.draw.rect(surface, color, caret_rect, border_radius=1)

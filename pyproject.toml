@@ -1,0 +1,11 @@
+[project]
+name = "keywarp-desktop"
+version = "1.5.0"
+description = "KeyWarp Desktop - 60 FPS touch-typing speed tester and performance telemetry"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pygame>=2.5.0",
+    "colorama>=0.4.6",
+    "tabulate>=0.9.0",
+]

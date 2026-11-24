@@ -15,7 +15,21 @@
     "Laughter echoed across the playground as the games continued until dusk.",
     "He kept a small notebook in his pocket to write down new ideas.",
     "The sweet fragrance of spring flowers filled the open meadow.",
-    "Summer breezes carried the quiet whisper of waves crashing on the shore."
+    "Summer breezes carried the quiet whisper of waves crashing on the shore.",
+    "The cat curled up comfortably on the soft rug by the sunny window.",
+    "A warm smile can make a great difference in someone's day.",
+    "They packed a basket of fruit and sandwiches for a sunny picnic in the garden.",
+    "The morning mist slowly cleared as the sun climbed higher in the blue sky.",
+    "Crisp autumn leaves rustled gently beneath their feet as they walked down the trail.",
+    "The old clock on the wooden wall ticked steadily through the quiet evening.",
+    "She planted tiny seeds in the garden and watered them carefully every day.",
+    "A flock of wild geese flew south in a neat V-shape across the sunset.",
+    "The library was warm and inviting on a cold, snowy December afternoon.",
+    "Children built sandcastles along the edge of the shallow ocean tide.",
+    "He brewed fresh coffee as the first light of dawn filled the kitchen.",
+    "The gentle river flowed smoothly around smooth stones and fallen branches.",
+    "Bright yellow butterflies fluttered happily around the blooming roses.",
+    "A soothing melody played softly on the radio in the background."
   ],
   "Medium": [
     "Software engineering is the systematic approach to the development, operation, and maintenance of software systems with high reliability.",
@@ -30,25 +44,43 @@
     "Renewable energy technologies like solar photovoltaics and offshore wind turbines are essential for a sustainable future.",
     "Effective communication requires active listening, empathy, and the ability to articulate complex thoughts with clarity.",
     "Space exploration expands our scientific horizons and challenges human ingenuity to solve unprecedented engineering hurdles.",
-    "Consistency over long periods produces compounding returns in skill development, knowledge acquisition, and physical fitness."
+    "Consistency over long periods produces compounding returns in skill development, knowledge acquisition, and physical fitness.",
+    "Building scalable web applications requires thoughtful caching strategies, database indexing, and asynchronous job processing.",
+    "The transition from monolithic architectures to microservices introduces new challenges in distributed tracing and telemetry.",
+    "Deep work is the ability to focus without distraction on a cognitively demanding task, producing high-value output.",
+    "Cryptographic algorithms protect digital privacy by ensuring that sensitive information remains tamper-proof across networks.",
+    "Biomechanical ergonomics in typing emphasizes neutral wrist alignment, relaxed shoulders, and fluid finger movements.",
+    "Continuous integration pipelines automatically build, test, and validate software changes to ensure zero regression in production.",
+    "Iterative design cycles rely on rapid prototyping, user feedback, and measurable performance analytics to refine interfaces.",
+    "Memory management in modern runtimes combines garbage collection with static ownership models to prevent memory leaks.",
+    "Cognitive endurance increases when tasks are broken down into focused sprints separated by brief recovery intervals.",
+    "Modern browsers employ multi-process architectures to isolate tabs, improving stability and security across domains.",
+    "High-velocity typing requires muscle memory automation so the conscious brain can focus purely on sentence formulation."
   ],
   "Hard": [
-    "In asynchronous programming (e.g., Python's asyncio or JavaScript's Promises), non-blocking I/O operations achieve concurrency without multi-threading overhead.",
-    "Quantum computing leverages superposition and entanglement phenomena (qubits: |0> & |1>) to solve intractable polynomial-time algorithmic problems.",
+    "In asynchronous programming (e.g., Python asyncio or JavaScript Promises), non-blocking I/O operations achieve concurrency without multi-threading overhead.",
+    "Quantum computing leverages superposition and entanglement phenomena (qubits: 0 & 1) to solve intractable polynomial-time algorithmic problems.",
     "Cryptographic hash functions like SHA-256 (Secure Hash Algorithm 256-bit) map arbitrary-length binary inputs to deterministic 64-character hexadecimal digests.",
     "Microservices architectures decouple monolithic systems into autonomous, loosely coupled services communicating via REST APIs or gRPC protocols.",
     "The algorithmic complexity of matrix multiplication scales from O(N^3) standard naive implementations down to O(N^2.37) using Strassen-like optimizations.",
     "Epistemological inquiries investigate the nature, origin, and scope of human knowledge, distinguishing justified belief from mere opinion.",
     "Distributed consensus protocols, such as Paxos and Raft, ensure state-machine replication across fault-tolerant nodes in decentralized networks.",
     "Neuroplasticity enables the central nervous system to dynamically reorganize its neural pathways in response to novel cognitive stimuli and physical trauma.",
-    "Zero-knowledge succinct non-interactive arguments of knowledge (zk-SNARKs) allow one party to prove ownership of a statement without disclosing the underlying payload."
+    "Zero-knowledge succinct non-interactive arguments of knowledge (zk-SNARKs) allow one party to prove ownership of a statement without disclosing the underlying payload.",
+    "Byzantine fault tolerance guarantees system reliability in adversarial environments where individual nodes may fail arbitrarily or transmit conflicting data.",
+    "Vectorized SIMD (Single Instruction, Multiple Data) processor registers accelerate matrix transformations and neural network inference by orders of magnitude.",
+    "Functional purity enforces referential transparency, eliminating hidden state mutations and simplifying deterministic parallel execution.",
+    "Garbage collection algorithms, such as generational mark-and-sweep or reference counting with cycle detection, balance pause-times with throughput.",
+    "Formal verification utilizes mathematical proofs to guarantee that mission-critical aerospace and financial software complies with specifications."
   ],
   "Code": [
-    "def calculate_wpm(characters: int, seconds: float) -> float:\n    if seconds <= 0: return 0.0\n    return round((characters / 5.0) / (seconds / 60.0), 2)",
-    "const fetchMetrics = async (userId: string): Promise<UserStats> => {\n    const res = await api.get(`/stats/${userId}`);\n    return res.data;\n};",
-    "import pandas as pd\ndf = pd.read_csv('history.csv')\navg_wpm = df.groupby('mode')['net_wpm'].mean().round(1)",
-    "class TypingSession:\n    def __init__(self, target_text: str):\n        self.target = target_text\n        self.typed = []\n        self.errors = 0",
-    "async function fetchTelemetry(endpoint: string, retries = 3): Promise<Response> {\n  for (let attempt = 1; attempt <= retries; attempt++) {\n    try {\n      return await fetch(endpoint);\n    } catch (err) {\n      if (attempt === retries) throw err;\n    }\n  }\n  throw new Error('Unreachable');\n}"
+    "def calculate_wpm(characters, seconds):\n    if seconds <= 0:\n        return 0.0\n    return round((characters / 5.0) / (seconds / 60.0), 2)",
+    "def binary_search(arr, target):\n    low, high = 0, len(arr) - 1\n    while low <= high:\n        mid = (low + high) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            low = mid + 1\n        else:\n            high = mid - 1\n    return -1",
+    "def bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if arr[j] > arr[j + 1]:\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\n    return arr",
+    "def quick_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    return [x for x in arr if x < pivot] + [x for x in arr if x == pivot] + [x for x in arr if x > pivot]",
+    "def is_palindrome(text):\n    cleaned = text.lower().replace(' ', '')\n    return cleaned == cleaned[::-1]",
+    "def count_words(sentence):\n    counts = {}\n    for word in sentence.split():\n        counts[word] = counts.get(word, 0) + 1\n    return counts",
+    "class TypingSession:\n    def __init__(self, target_text):\n        self.target = target_text\n        self.typed = []\n        self.errors = 0"
   ],
   "Quotes": [
     "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Don't settle. — Steve Jobs",
@@ -57,6 +89,13 @@
     "It is during our darkest moments that we must focus to see the light. Knowledge and perseverance conquer all obstacles. — Aristotle",
     "We are what we repeatedly do. Excellence, then, is not an act, but a habit cultivated through disciplined practice. — Will Durant",
     "The greatest glory in living lies not in never falling, but in rising every time we fall. — Nelson Mandela",
-    "In the middle of difficulty lies opportunity. Keep moving forward and never let self-doubt dictate your limits. — Albert Einstein"
+    "In the middle of difficulty lies opportunity. Keep moving forward and never let self-doubt dictate your limits. — Albert Einstein",
+    "Sometimes it is the people no one can imagine anything of who do the things no one can imagine. — Alan Turing",
+    "The most dangerous phrase in the language is, we've always done it this way. — Grace Hopper",
+    "You have power over your mind, not outside events. Realize this, and you will find strength. — Marcus Aurelius",
+    "The present is theirs; the future, for which I really worked, is mine. — Nikola Tesla",
+    "Premature optimization is the root of all evil in programming. — Donald Knuth",
+    "Any fool can write code that a computer can understand. Good programmers write code that humans can understand. — Martin Fowler",
+    "The best way to predict the future is to invent it. — Alan Kay"
   ]
 }

@@ -1,80 +1,82 @@
 """
-Procedural sound effects generator for typing and results.
-Uses synthesized waveform buffers with pygame.mixer.
+Sound Engine Module for KeyWarp Desktop.
+Provides procedural acoustic feedback for key clicks, mistakes, and completions.
+Gracefully handles missing audio hardware without crashing.
 """
 
 import math
-import numpy as np
+import struct
 import pygame
 
 
-class SoundManager:
+class SoundEngine:
+    _instance = None
+
     def __init__(self, enabled: bool = True):
         self.enabled = enabled
-        self._key_click_sound = None
-        self._error_sound = None
-        self._complete_sound = None
-        self._init_sounds()
+        self.initialized = False
+        self.click_sound = None
+        self.error_sound = None
+        self.success_sound = None
 
-    def _init_sounds(self) -> None:
+        self._init_mixer()
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = SoundEngine()
+        return cls._instance
+
+    def _init_mixer(self) -> None:
         try:
             if not pygame.mixer.get_init():
-                pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
-            
-            # Procedurally synthesize click sound
-            sample_rate = 44100
-            
-            # 1. Subtle mechanical key click (20ms burst)
-            click_duration = 0.02
-            click_samples = int(sample_rate * click_duration)
-            click_t = np.linspace(0, click_duration, click_samples, False)
-            click_wave = np.sin(2 * np.pi * 1200 * click_t) * np.exp(-click_t * 200)
-            click_audio = (click_wave * 0.15 * 32767).astype(np.int16)
-            click_stereo = np.column_stack((click_audio, click_audio))
-            self._key_click_sound = pygame.sndarray.make_sound(click_stereo)
-
-            # 2. Soft error beep (40ms)
-            err_duration = 0.05
-            err_samples = int(sample_rate * err_duration)
-            err_t = np.linspace(0, err_duration, err_samples, False)
-            err_wave = np.sin(2 * np.pi * 220 * err_t) * np.exp(-err_t * 60)
-            err_audio = (err_wave * 0.25 * 32767).astype(np.int16)
-            err_stereo = np.column_stack((err_audio, err_audio))
-            self._error_sound = pygame.sndarray.make_sound(err_stereo)
-
-            # 3. Completion chime (150ms)
-            comp_duration = 0.25
-            comp_samples = int(sample_rate * comp_duration)
-            comp_t = np.linspace(0, comp_duration, comp_samples, False)
-            comp_wave = (np.sin(2 * np.pi * 587.33 * comp_t) + np.sin(2 * np.pi * 880.0 * comp_t)) * np.exp(-comp_t * 12)
-            comp_audio = (comp_wave * 0.2 * 32767).astype(np.int16)
-            comp_stereo = np.column_stack((comp_audio, comp_audio))
-            self._complete_sound = pygame.sndarray.make_sound(comp_stereo)
+                pygame.mixer.init(frequency=44100, size=-16, channels=1, buffer=512)
+            self._generate_sounds()
+            self.initialized = True
         except Exception as e:
-            # Sound initialization optional
-            self.enabled = False
+            # Running on a system without audio drivers; continue silently
+            self.initialized = False
 
-    def toggle(self) -> bool:
-        self.enabled = not self.enabled
-        return self.enabled
+    def _generate_sine_sound(self, freq: float, duration_ms: int, volume: float = 0.2) -> pygame.mixer.Sound:
+        sample_rate = 44100
+        n_samples = int(sample_rate * (duration_ms / 1000.0))
+        buf = bytearray()
+        for i in range(n_samples):
+            # Apply quick envelope fade-out to prevent audio pops
+            envelope = 1.0 - (i / n_samples)
+            sample = int(32767 * volume * envelope * math.sin(2.0 * math.pi * freq * (i / sample_rate)))
+            buf.extend(struct.pack("<h", sample))
+        return pygame.mixer.Sound(buffer=bytes(buf))
+
+    def _generate_sounds(self) -> None:
+        try:
+            self.click_sound = self._generate_sine_sound(880, 25, volume=0.15)
+            self.error_sound = self._generate_sine_sound(220, 60, volume=0.25)
+            self.success_sound = self._generate_sine_sound(1200, 120, volume=0.2)
+        except Exception:
+            pass
 
     def play_click(self) -> None:
-        if self.enabled and self._key_click_sound:
+        if self.enabled and self.initialized and self.click_sound:
             try:
-                self._key_click_sound.play()
+                self.click_sound.play()
             except Exception:
                 pass
 
     def play_error(self) -> None:
-        if self.enabled and self._error_sound:
+        if self.enabled and self.initialized and self.error_sound:
             try:
-                self._error_sound.play()
+                self.error_sound.play()
             except Exception:
                 pass
 
     def play_complete(self) -> None:
-        if self.enabled and self._complete_sound:
+        if self.enabled and self.initialized and self.success_sound:
             try:
-                self._complete_sound.play()
+                self.success_sound.play()
             except Exception:
                 pass
+
+    def toggle(self) -> bool:
+        self.enabled = not self.enabled
+        return self.enabled
