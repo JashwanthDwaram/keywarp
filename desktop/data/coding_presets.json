@@ -1,0 +1,145 @@
+{
+  "code_presets": {
+    "typescript": [
+      "interface UserProfile {\n  id: string;\n  email: string;\n  role: 'admin' | 'member';\n  createdAt: Date;\n}",
+      "const fetchTelemetry = async (sessionId: string): Promise<TypingRecord> => {\n  const response = await fetch(`/api/sessions/${sessionId}`);\n  if (!response.ok) throw new Error('Failed to fetch');\n  return response.json();\n};",
+      "export const useDebounce = <T>(value: T, delayMs: number): T => {\n  const [debounced, setDebounced] = useState<T>(value);\n  useEffect(() => {\n    const timer = setTimeout(() => setDebounced(value), delayMs);\n    return () => clearTimeout(timer);\n  }, [value, delayMs]);\n  return debounced;\n};",
+      "type Result<T, E = Error> = \n  | { success: true; data: T }\n  | { success: false; error: E };\n\nfunction parseInput(raw: string): Result<number> {\n  const num = Number(raw);\n  return isNaN(num) ? { success: false, error: new Error('NaN') } : { success: true, data: num };\n}",
+      "const memoizedCallback = useCallback((key: string, count: number) => {\n  setMistakeMatrix(prev => ({\n    ...prev,\n    [key]: (prev[key] || 0) + count\n  }));\n}, []);",
+      "const createStore = <State>(initial: State) => {\n  let current = initial;\n  const listeners = new Set<(s: State) => void>();\n  return {\n    get: () => current,\n    set: (next: State) => { current = next; listeners.forEach(fn => fn(current)); },\n    subscribe: (fn: (s: State) => void) => { listeners.add(fn); return () => listeners.delete(fn); }\n  };\n};"
+    ],
+    "python": [
+      "def calculate_wpm(characters, seconds):\n    if seconds <= 0:\n        return 0.0\n    minutes = seconds / 60.0\n    return round((characters / 5.0) / minutes, 2)",
+      "def binary_search(arr, target):\n    low, high = 0, len(arr) - 1\n    while low <= high:\n        mid = (low + high) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            low = mid + 1\n        else:\n            high = mid - 1\n    return -1",
+      "def bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if arr[j] > arr[j + 1]:\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\n    return arr",
+      "def quick_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    mid = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quick_sort(left) + mid + quick_sort(right)",
+      "def is_palindrome(text):\n    cleaned = text.lower().replace(' ', '')\n    return cleaned == cleaned[::-1]",
+      "def fibonacci(limit):\n    a, b = 0, 1\n    results = []\n    while a < limit:\n        results.append(a)\n        a, b = b, a + b\n    return results",
+      "def count_words(sentence):\n    counts = {}\n    for word in sentence.split():\n        counts[word] = counts.get(word, 0) + 1\n    return counts",
+      "class TypingSession:\n    def __init__(self, target_text):\n        self.target = target_text\n        self.typed = []\n        self.errors = 0"
+    ],
+    "rust": [
+      "pub struct CaretBuffer {\n    target_words: Vec<String>,\n    active_index: usize,\n    current_input: String,\n}\n\nimpl CaretBuffer {\n    pub fn is_complete(&self) -> bool {\n        self.active_index >= self.target_words.len()\n    }\n}",
+      "fn calculate_smoothed_wpm(raw: f64, previous: f64, elapsed: f64) -> f64 {\n    let alpha = 0.35;\n    if previous == 0.0 {\n        raw\n    } else {\n        alpha * raw + (1.0 - alpha) * previous\n    }\n}",
+      "enum TypingEvent {\n    CharInput(char),\n    SpaceAdvance,\n    Backspace { is_ctrl: bool },\n    RestartSprint,\n}\n\nfn handle_event(event: TypingEvent, state: &mut ArenaState) -> Option<SessionRecord> {\n    match event {\n        TypingEvent::CharInput(c) => state.insert_char(c),\n        TypingEvent::SpaceAdvance => state.advance_word(),\n        _ => None,\n    }\n}",
+      "use std::collections::HashMap;\n\npub fn extract_weak_clusters(data: &[SessionLog]) -> HashMap<String, u32> {\n    data.iter().fold(HashMap::new(), |mut acc, log| {\n        for (k, v) in &log.errors {\n            *acc.entry(k.clone()).or_insert(0) += v;\n        }\n        acc\n    })\n}"
+    ],
+    "sql": [
+      "SELECT \n  user_id,\n  COUNT(id) AS total_sessions,\n  ROUND(AVG(net_wpm), 1) AS avg_wpm,\n  MAX(net_wpm) AS peak_wpm,\n  ROUND(AVG(accuracy), 2) AS avg_accuracy\nFROM typing_sessions\nWHERE created_at >= NOW() - INTERVAL '30 days'\nGROUP BY user_id\nHAVING COUNT(id) >= 5\nORDER BY peak_wpm DESC;",
+      "WITH RankedScores AS (\n  SELECT \n    session_id,\n    user_id,\n    net_wpm,\n    accuracy,\n    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY net_wpm DESC) as pb_rank\n  FROM leaderboard_entries\n)\nSELECT * FROM RankedScores WHERE pb_rank = 1;",
+      "CREATE INDEX idx_sessions_user_created ON typing_sessions(user_id, created_at DESC);\nALTER TABLE users ADD COLUMN preferred_theme VARCHAR(32) DEFAULT 'earth-minimal';"
+    ],
+    "htmlcss": [
+      "<div class=\"relative flex items-center justify-between p-4 rounded-lg bg-surface/80 border border-ink-400/15 backdrop-blur-sm shadow-sm font-sans\">\n  <span class=\"text-xs font-mono text-accent font-semibold\">flow cadence</span>\n  <button class=\"px-3 py-1.5 rounded bg-accent text-white font-medium hover:opacity-90 transition-all\">start</button>\n</div>",
+      "@media (prefers-reduced-motion: no-preference) {\n  .animate-caret {\n    animation: block-caret-blink 1.05s ease-in-out infinite;\n  }\n  .glow-pulse {\n    box-shadow: 0 0 16px rgba(var(--color-accent-rgb), 0.65);\n  }\n}",
+      "<main class=\"max-w-4xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-ink-100\">\n  <section class=\"col-span-2 space-y-4\"></section>\n  <aside class=\"space-y-3\"></aside>\n</main>"
+    ],
+    "golang": [
+      "type SessionRecord struct {\n\tID        string    `json:\"id\"`\n\tNetWPM    float64   `json:\"net_wpm\"`\n\tAccuracy  float64   `json:\"accuracy\"`\n\tTimestamp time.Time `json:\"timestamp\"`\n}\n\nfunc (s *SessionRecord) IsGodspeed() bool {\n\treturn s.NetWPM >= 100.0 && s.Accuracy >= 98.0\n}",
+      "func BroadcastTelemetry(hub *Hub, msg TelemetryMessage) error {\n\tselect {\n\tcase hub.broadcast <- msg:\n\t\treturn nil\n\tcase <-time.After(100 * time.Millisecond):\n\t\treturn errors.New(\"broadcast timeout\")\n\t}\n}"
+    ]
+  },
+  "vocab_packs": {
+    "1k": [
+      "the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", "on", "with", "he",
+      "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or",
+      "an", "will", "my", "one", "all", "would", "there", "their", "what", "so", "up", "out", "if", "about",
+      "who", "get", "which", "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know",
+      "take", "people", "into", "year", "your", "good", "some", "could", "them", "see", "other", "than",
+      "then", "now", "look", "only", "come", "its", "over", "think", "also", "back", "after", "use", "two",
+      "how", "our", "work", "first", "well", "way", "even", "new", "want", "because", "any", "these", "give",
+      "day", "most", "us", "great", "between", "need", "large", "under", "might", "still", "found", "thought",
+      "point", "world", "place", "hand", "life", "tell", "sentence", "should", "water", "system", "build",
+      "number", "sound", "line", "side", "been", "now", "find", "head", "stand", "own", "page", "should",
+      "country", "found", "answer", "school", "grow", "study", "still", "learn", "plant", "cover", "food",
+      "sun", "four", "between", "state", "keep", "eye", "never", "last", "let", "thought", "city", "tree"
+    ],
+    "5k": [
+      "algorithm", "cadence", "biomechanics", "velocity", "equilibrium", "synchronize", "precision",
+      "momentum", "trajectory", "perspective", "resonance", "heuristic", "subversive", "infrastructure",
+      "coordinate", "neuromuscular", "resilience", "transition", "cognitive", "architecture", "bandwidth",
+      "calibration", "deterministic", "entropy", "frequency", "granularity", "hierarchy", "iteration",
+      "jurisdiction", "kinetics", "leverage", "magnitude", "navigation", "oscillation", "paradigms",
+      "quantum", "rhythm", "synthesize", "tactical", "unison", "vibration", "wavelength", "zenith",
+      "asymptotic", "benchmark", "concurrency", "divergence", "exponential", "fluctuation", "generative",
+      "hyperbolic", "immutable", "juxtapose", "kinesthetic", "logarithmic", "metronome", "nonvolatile",
+      "orthogonal", "phenomenon", "quadratic", "refactoring", "streamlined", "topological", "ubiquity"
+    ],
+    "10k": [
+      "anachronistic", "epistemology", "quintessential", "juxtaposition", "labyrinthine", "magnanimous",
+      "perspicacity", "recalcitrant", "ubiquitous", "vicarious", "pulchritude", "zeitgeist", "surreptitious",
+      "idiosyncrasy", "sesquipedalian", "inconsequential", "circumspect", "deleterious", "ephemeral",
+      "fastidious", "grandiloquent", "hegemony", "impecunious", "misanthrope", "nefarious", "obfuscate",
+      "perfunctory", "quixotic", "reprobate", "sycophant", "trepidation", "unconscionable", "verisimilitude",
+      "pusillanimous", "perspicuous", "lugubrious", "mellifluous", "parsimonious", "recondite", "salubrious",
+      "supercilious", "tintinnabulation", "truculent", "turgid", "vacillate", "venerate", "vociferous"
+    ],
+    "tech": [
+      "microservices", "kubernetes", "distributed", "concurrency", "idempotent", "asynchronous",
+      "polymorphism", "serialization", "telemetry", "cryptography", "immutability", "eventually",
+      "consistency", "observability", "throughput", "backpressure", "sharding", "partition",
+      "vectorization", "quantization", "middleware", "syntactic", "composition", "memoization",
+      "containerization", "orchestration", "replication", "decoupling", "declarative", "imperative",
+      "deterministic", "interceptor", "multitenancy", "normalization", "benchmarking", "transpilation",
+      "microfrontend", "websockets", "hypervisor", "virtualization", "idempotency", "subgraph"
+    ]
+  },
+  "quotes": [
+    {
+      "text": "The speed of human thought should never be bounded by the friction of a keyboard.",
+      "author": "Jashwanth Dwaram"
+    },
+    {
+      "text": "Mastery is not about hitting keys faster, but eliminating the hesitations between them.",
+      "author": "Jashwanth Dwaram"
+    },
+    {
+      "text": "Focus is a muscle. The more you train your keystrokes to follow thought without hesitation, the more boundless your craft becomes.",
+      "author": "Jashwanth Dwaram"
+    },
+    {
+      "text": "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Don't settle.",
+      "author": "Steve Jobs"
+    },
+    {
+      "text": "Simplicity is prerequisite for reliability. Complex systems always fail in complex, unexpected ways.",
+      "author": "Edsger W. Dijkstra"
+    },
+    {
+      "text": "Talk is cheap. Show me the code. Software design is about making choices that balance clarity, speed, and maintainability.",
+      "author": "Linus Torvalds"
+    },
+    {
+      "text": "It is during our darkest moments that we must focus to see the light. Knowledge and perseverance conquer all obstacles.",
+      "author": "Aristotle"
+    },
+    {
+      "text": "We are what we repeatedly do. Excellence, then, is not an act, but a habit cultivated through disciplined practice.",
+      "author": "Will Durant"
+    },
+    {
+      "text": "In the middle of difficulty lies opportunity. Keep moving forward and never let self-doubt dictate your limits.",
+      "author": "Albert Einstein"
+    },
+    {
+      "text": "Premature optimization is the root of all evil in programming.",
+      "author": "Donald Knuth"
+    },
+    {
+      "text": "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
+      "author": "Martin Fowler"
+    },
+    {
+      "text": "The best way to predict the future is to invent it.",
+      "author": "Alan Kay"
+    },
+    {
+      "text": "Programs must be written for people to read, and only incidentally for machines to execute.",
+      "author": "Harold Abelson"
+    },
+    {
+      "text": "Make it work, make it right, make it fast.",
+      "author": "Kent Beck"
+    }
+  ]
+}

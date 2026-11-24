@@ -1,4 +1,3 @@
-pygame>=2.6.0
-pandas>=2.2.0
-matplotlib>=3.8.0
-numpy>=1.26.0
+# KeyWarp Desktop Dependencies
+# Note: Tkinter is included in the standard Python installation.
+pygame>=2.5.0

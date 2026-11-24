@@ -1,11 +1,18 @@
 """
-Core Typing Engine.
-Handles real-time keystroke processing, live WPM/Accuracy metrics,
-mistake tracking, and performance statistics calculation.
+Core Typing Engine for KeyWarp Desktop.
+Handles keystroke processing, real-time calculations (WPM, CPM, Accuracy),
+error tracking, and session completion checks.
+
+- Standard Word Length = 5 characters.
+- Elapsed Time (minutes) = (current_time - start_time) / 60.0
+- Gross WPM = (Total Keystrokes / 5) / Elapsed Minutes
+- Net WPM   = (Correct Characters / 5) / Elapsed Minutes
+- Accuracy  = (Correct Characters / Total Keystrokes) * 100%
+- CPM       = Correct Characters / Elapsed Minutes
 """
 
 import time
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, Any
 
 
 class TypingEngine:
@@ -15,172 +22,155 @@ class TypingEngine:
         self.difficulty = difficulty
         self.sprint_duration = sprint_duration
 
-        self.typed_chars: List[str] = []
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
-        
+        # Keystroke state
+        self.typed_chars: list[str] = []
         self.total_keystrokes: int = 0
         self.correct_keystrokes: int = 0
         self.incorrect_keystrokes: int = 0
-        self.mistyped_char_map: Dict[str, int] = {}  # maps expected char -> error count
-        
+        self.mistake_map: Dict[str, int] = {}  # Tracks which characters were missed and how often
+
+        # Timing state
+        self.start_time: float = 0.0
+        self.end_time: float = 0.0
         self.is_started: bool = False
         self.is_finished: bool = False
 
-    def reset(self, new_target: Optional[str] = None) -> None:
-        """Resets the engine for a new session."""
-        if new_target is not None:
-            self.target_text = new_target
-        self.typed_chars.clear()
-        self.start_time = None
-        self.end_time = None
-        self.total_keystrokes = 0
-        self.correct_keystrokes = 0
-        self.incorrect_keystrokes = 0
-        self.mistyped_char_map.clear()
-        self.is_started = False
-        self.is_finished = False
-
     def handle_input(self, char: str) -> None:
-        """Processes a single typed character."""
+        """Processes a single typed character from Pygame event loop."""
         if self.is_finished:
             return
 
-        current_time = time.time()
+        # Start clock on the very first keystroke
         if not self.is_started:
-            self.start_time = current_time
+            self.start_time = time.time()
             self.is_started = True
 
-        idx = len(self.typed_chars)
-        if idx >= len(self.target_text):
-            return
-
-        expected_char = self.target_text[idx]
-        self.typed_chars.append(char)
+        current_idx = len(self.typed_chars)
         self.total_keystrokes += 1
 
-        if char == expected_char:
-            self.correct_keystrokes += 1
-        else:
-            self.incorrect_keystrokes += 1
-            # Track which expected character was mistyped
-            char_key = expected_char if expected_char != " " else "[space]"
-            self.mistyped_char_map[char_key] = self.mistyped_char_map.get(char_key, 0) + 1
+        # Check correctness against expected character
+        if current_idx < len(self.target_text):
+            expected = self.target_text[current_idx]
+            if char == expected:
+                self.correct_keystrokes += 1
+            else:
+                self.incorrect_keystrokes += 1
+                self.mistake_map[expected] = self.mistake_map.get(expected, 0) + 1
 
-        # Check completion in passage mode
+        self.typed_chars.append(char)
+
+        # Check passage completion
         if len(self.typed_chars) >= len(self.target_text):
             self.finish()
 
     def handle_backspace(self) -> None:
-        """Handles backspace key press."""
+        """Allows deleting the last character typed."""
         if self.is_finished or not self.typed_chars:
             return
-        self.typed_chars.pop()
+
+        last_char = self.typed_chars.pop()
+        current_idx = len(self.typed_chars)
+
+        # If the deleted character was correct, adjust count
+        if current_idx < len(self.target_text) and last_char == self.target_text[current_idx]:
+            self.correct_keystrokes = max(0, self.correct_keystrokes - 1)
 
     def finish(self) -> None:
-        """Marks the session as completed."""
+        """Marks the typing test as finished and locks end time."""
         if not self.is_finished:
+            self.end_time = time.time()
             self.is_finished = True
-            self.end_time = time.time() if self.start_time else time.time()
-
-    def update_sprint_timer(self) -> bool:
-        """Updates sprint timer. Returns True if sprint expired."""
-        if self.mode == "Sprint" and self.is_started and not self.is_finished:
-            elapsed = time.time() - (self.start_time or time.time())
-            if elapsed >= self.sprint_duration:
-                self.finish()
-                return True
-        return False
 
     def get_elapsed_seconds(self) -> float:
         """Returns elapsed time in seconds."""
         if not self.is_started:
             return 0.0
-        if self.is_finished and self.end_time and self.start_time:
-            return max(0.001, self.end_time - self.start_time)
-        if self.start_time:
-            return max(0.001, time.time() - self.start_time)
-        return 0.0
+        if self.is_finished:
+            return max(0.1, self.end_time - self.start_time)
+        return max(0.1, time.time() - self.start_time)
 
     def get_remaining_sprint_seconds(self) -> float:
-        """For sprint mode: returns remaining countdown seconds."""
+        """For Sprint mode: returns seconds left on the countdown timer."""
         if not self.is_started:
             return self.sprint_duration
-        elapsed = self.get_elapsed_seconds()
-        return max(0.0, self.sprint_duration - elapsed)
-
-    def get_gross_wpm(self) -> float:
-        """Gross WPM = (Total Typed Characters / 5) / (Time in minutes)"""
-        elapsed_sec = self.get_elapsed_seconds()
-        if elapsed_sec <= 0 or len(self.typed_chars) == 0:
+        elapsed = time.time() - self.start_time
+        remaining = self.sprint_duration - elapsed
+        if remaining <= 0:
+            self.finish()
             return 0.0
-        minutes = elapsed_sec / 60.0
-        return round((len(self.typed_chars) / 5.0) / minutes, 1)
+        return remaining
 
     def get_net_wpm(self) -> float:
         """
-        Net WPM = ((Correct Characters / 5) - Uncorrected Errors) / (Time in minutes)
-        Standard touch-typing benchmark formula.
+        Net Words Per Minute (Standard Typing Test Metric).
+        Net WPM = (Correct Characters / 5) / Elapsed Minutes
         """
         elapsed_sec = self.get_elapsed_seconds()
-        if elapsed_sec <= 0 or len(self.typed_chars) == 0:
+        if elapsed_sec <= 0:
             return 0.0
-        
-        # Count currently uncorrected errors in typed stream
-        uncorrected_errors = 0
-        for i, typed_ch in enumerate(self.typed_chars):
-            if i < len(self.target_text) and typed_ch != self.target_text[i]:
-                uncorrected_errors += 1
-
-        correct_chars_typed = len(self.typed_chars) - uncorrected_errors
         minutes = elapsed_sec / 60.0
-        
-        net_words = (correct_chars_typed / 5.0) - uncorrected_errors
-        net_wpm = net_words / minutes
-        return max(0.0, round(net_wpm, 1))
+        words = self.correct_keystrokes / 5.0
+        return round(words / minutes, 1)
+
+    def get_gross_wpm(self) -> float:
+        """
+        Gross Words Per Minute (Raw Speed without error deduction).
+        Gross WPM = (Total Keystrokes / 5) / Elapsed Minutes
+        """
+        elapsed_sec = self.get_elapsed_seconds()
+        if elapsed_sec <= 0:
+            return 0.0
+        minutes = elapsed_sec / 60.0
+        words = self.total_keystrokes / 5.0
+        return round(words / minutes, 1)
 
     def get_accuracy(self) -> float:
-        """Accuracy = (Correct Keystrokes / Total Keystrokes) * 100%"""
+        """
+        Accuracy Percentage = (Correct Keystrokes / Total Keystrokes) * 100
+        """
         if self.total_keystrokes == 0:
             return 100.0
         acc = (self.correct_keystrokes / self.total_keystrokes) * 100.0
         return round(max(0.0, min(100.0, acc)), 1)
 
-    def get_current_index(self) -> int:
-        return len(self.typed_chars)
+    def get_cpm(self) -> float:
+        """Characters Per Minute = Correct Characters / Elapsed Minutes"""
+        elapsed_sec = self.get_elapsed_seconds()
+        if elapsed_sec <= 0:
+            return 0.0
+        minutes = elapsed_sec / 60.0
+        return round(self.correct_keystrokes / minutes, 1)
 
-    def get_char_render_info(self) -> List[Tuple[str, str]]:
-        """
-        Returns list of (char, status) for rendering.
-        Statuses: 'CORRECT', 'INCORRECT', 'CURRENT', 'PENDING'
-        """
-        result = []
-        curr_idx = len(self.typed_chars)
-        for i, expected in enumerate(self.target_text):
-            if i < curr_idx:
-                status = "CORRECT" if self.typed_chars[i] == expected else "INCORRECT"
-            elif i == curr_idx:
-                status = "CURRENT"
-            else:
-                status = "PENDING"
-            result.append((expected, status))
-        return result
+    def get_summary(self) -> Dict[str, Any]:
+        """Compiles final test statistics into a summary dictionary."""
+        def encode_char(c: str) -> str:
+            if c == " ":
+                return "[space]"
+            elif c == "\n":
+                return "[enter]"
+            elif c == "\t":
+                return "[tab]"
+            elif c == ":":
+                return "[colon]"
+            elif c == ";":
+                return "[semicolon]"
+            return c
 
-    def get_summary(self) -> Dict:
-        """Returns comprehensive session metrics summary."""
-        # Top 3 mistyped keys
-        sorted_errors = sorted(self.mistyped_char_map.items(), key=lambda x: x[1], reverse=True)
-        top_errors_str = ";".join([f"{k}:{v}" for k, v in sorted_errors[:5]]) if sorted_errors else "None"
+        # Top mistyped characters string formatted as 'char:count;char:count'
+        sorted_mistakes = sorted(self.mistake_map.items(), key=lambda x: x[1], reverse=True)
+        mistake_str = ";".join(f"{encode_char(k)}:{v}" for k, v in sorted_mistakes[:5]) if sorted_mistakes else "None"
 
         return {
             "mode": self.mode,
             "difficulty": self.difficulty,
-            "passage_length": len(self.target_text),
-            "characters_typed": len(self.typed_chars),
-            "time_seconds": round(self.get_elapsed_seconds(), 2),
-            "gross_wpm": self.get_gross_wpm(),
             "net_wpm": self.get_net_wpm(),
+            "gross_wpm": self.get_gross_wpm(),
+            "cpm": self.get_cpm(),
             "accuracy": self.get_accuracy(),
+            "time_seconds": round(self.get_elapsed_seconds(), 1),
+            "characters_typed": len(self.typed_chars),
+            "correct_keystrokes": self.correct_keystrokes,
             "total_errors": self.incorrect_keystrokes,
-            "mistyped_keys": top_errors_str
+            "mistyped_keys": mistake_str,
+            "date": time.strftime("%Y-%m-%d %H:%M:%S")
         }

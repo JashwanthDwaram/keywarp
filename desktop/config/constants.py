@@ -1,65 +1,47 @@
 """
-Constants and UI theme definition for Typing Speed Test Game.
-Inspired by modern dark mode UI design systems (slate + indigo/emerald/rose accents).
+Application Constants for KeyWarp Desktop.
+Defines window dimensions, color palettes, and UI state constants.
 """
 
-WINDOW_WIDTH = 1100
-WINDOW_HEIGHT = 720
+# Window Configuration
+WINDOW_WIDTH = 1200
+WINDOW_HEIGHT = 800
+MIN_WIDTH = 950
+MIN_HEIGHT = 650
 FPS = 60
-WINDOW_TITLE = "KeyWarp - Real-time Typing Speed Test & Analytics"
+WINDOW_TITLE = "KeyWarp Desktop - Typing Speed Test & Analytics"
 
-# Color Palette (RGB)
-BG_MAIN = (15, 23, 42)          # Slate 900
-BG_PANEL = (30, 41, 59)         # Slate 800
-BG_PANEL_ALT = (23, 32, 48)     # Slate 850
-BG_CARD = (30, 41, 59)          # Card background
-BG_CARD_HOVER = (39, 52, 73)    # Hover state for card
-BG_INPUT_BOX = (15, 23, 42)     # Deep input container
-BORDER_SUBTLE = (51, 65, 85)    # Slate 700
-BORDER_ACTIVE = (99, 102, 241)  # Indigo 500
-BORDER_HIGHLIGHT = (56, 189, 248) # Sky 400
+# Color Palette (Dark Theme matching KeyWarp Web)
+BG_MAIN = (15, 23, 42)        # Deep slate background (#0f172a)
+BG_PANEL = (30, 41, 59)      # Container background (#1e293b)
+BG_CARD = (51, 65, 85)       # Card & component surface (#334155)
+BG_INPUT = (15, 23, 42)      # Inner input surface
 
-# Typography Colors
-TEXT_PRIMARY = (248, 250, 252)   # Slate 50
-TEXT_SECONDARY = (203, 213, 225) # Slate 300
-TEXT_MUTED = (148, 163, 184)     # Slate 400
-TEXT_DIM = (71, 85, 105)         # Slate 600
+TEXT_PRIMARY = (248, 250, 252)   # High-contrast white/slate (#f8fafc)
+TEXT_MUTED = (148, 163, 184)     # Medium contrast (#94a3b8)
+TEXT_DIM = (100, 116, 139)       # Subtle helper text (#64748b)
 
-# Functional Status Colors
-ACCENT_INDIGO = (99, 102, 241)   # Indigo 500
-ACCENT_INDIGO_HOVER = (129, 140, 248)
-ACCENT_SKY = (56, 189, 248)      # Sky 400
-ACCENT_PURPLE = (168, 85, 247)   # Purple 500
+ACCENT_CYAN = (56, 189, 248)     # Primary accent sky/cyan (#38bdf8)
+ACCENT_PURPLE = (168, 85, 247)   # Secondary accent purple (#a855f7)
+COLOR_CORRECT = (34, 197, 94)    # Correct character green (#22c55e)
+COLOR_ERROR = (248, 113, 113)     # Mistake light coral red (#f87171) for crisp legibility
+COLOR_ERROR_BG = (65, 20, 25)     # Subtle mistake dark-tint background
+COLOR_ERROR_LINE = (239, 68, 68)  # Crisp error underline red (#ef4444)
+BORDER_COLOR = (71, 85, 105)     # Subtle borders (#475569)
+BORDER_ACTIVE = (56, 189, 248)   # Highlight border
 
-# Typing Feedback Colors
-CHAR_CORRECT = (52, 211, 153)    # Emerald 400
-CHAR_CORRECT_BG = (6, 78, 59, 80)# Dark Emerald highlight
-CHAR_INCORRECT = (248, 113, 113) # Red 400
-CHAR_INCORRECT_BG = (153, 27, 27)# Deep Red highlight
-CHAR_PENDING = (100, 116, 139)   # Slate 500 (upcoming)
-CARET_COLOR = (56, 189, 248)     # Glowing Sky Caret
+# App States
+STATE_MENU = "menu"
+STATE_TYPING = "typing"
+STATE_RESULTS = "results"
+STATE_HISTORY = "history"
 
-# Badges & Accents
-SUCCESS = (16, 185, 129)
-WARNING = (245, 158, 11)
-ERROR = (239, 68, 68)
+# Test Modes & Difficulties
+MODE_PASSAGE = "Passage"
+MODE_SPRINT = "Sprint (60s)"
 
-# Application States
-STATE_MENU = "MENU"
-STATE_TYPING = "TYPING"
-STATE_SPRINT = "SPRINT"
-STATE_RESULTS = "RESULTS"
-STATE_HISTORY = "HISTORY"
-STATE_ANALYTICS = "ANALYTICS"
-
-# Difficulty Levels
 DIFF_EASY = "Easy"
 DIFF_MEDIUM = "Medium"
 DIFF_HARD = "Hard"
 DIFF_CODE = "Code"
 DIFF_QUOTES = "Quotes"
-
-# CSV Data File Path
-CSV_FILE_PATH = "data/typing_history.csv"
-PASSAGES_FILE_PATH = "data/passages.json"
-WORDS_FILE_PATH = "data/words.txt"

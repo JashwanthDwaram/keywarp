@@ -480,9 +480,10 @@ export const WEB_PASSAGES = {
     "Formal verification utilizes mathematical proofs to guarantee that mission-critical aerospace and financial software complies with specifications."
   ],
   Code: [
-    "const calculateWpm = (chars: number, seconds: number): number => {\n  if (seconds <= 0) return 0;\n  return Math.round(((chars / 5) / (seconds / 60)) * 10) / 10;\n};",
+    "def calculate_wpm(characters, seconds):\n  if seconds <= 0:\n    return 0.0\n  return round((characters / 5.0) / (seconds / 60.0), 2);",
     "export function useTypingEngine(target: string) {\n  const [typed, setTyped] = useState('');\n  const [startTime, setStartTime] = useState(null);\n  return { typed, startTime };\n}",
-    "def bubble_sort(arr: list[int]) -> list[int]:\n  n = len(arr)\n  for i in range(n):\n    for j in range(0, n - i - 1):\n      if arr[j] > arr[j + 1]:\n        arr[j], arr[j + 1] = arr[j + 1], arr[j]\n  return arr",
+    "def bubble_sort(arr):\n  n = len(arr)\n  for i in range(n):\n    for j in range(0, n - i - 1):\n      if arr[j] > arr[j + 1]:\n        arr[j], arr[j + 1] = arr[j + 1], arr[j]\n  return arr",
+    "def binary_search(arr, target):\n  low = 0\n  high = len(arr) - 1\n  while low <= high:\n    mid = (low + high) // 2\n    if arr[mid] == target:\n      return mid\n    elif arr[mid] < target:\n      low = mid + 1\n    else:\n      high = mid - 1\n  return -1",
     "async function fetchTelemetry(endpoint: string): Promise<Response> {\n  try {\n    return await fetch(endpoint);\n  } catch (err) {\n    throw new Error('Telemetry network failure');\n  }\n}",
     "type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };",
     "pub fn binary_search<T: Ord>(arr: &[T], target: &T) -> Option<usize> {\n    arr.binary_search(target).ok()\n}",

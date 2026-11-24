@@ -22,11 +22,14 @@ export const CODE_LANGUAGE_PRESETS: Record<CodeLanguage, string[]> = {
     "const createStore = <State>(initial: State) => {\n  let current = initial;\n  const listeners = new Set<(s: State) => void>();\n  return {\n    get: () => current,\n    set: (next: State) => { current = next; listeners.forEach(fn => fn(current)); },\n    subscribe: (fn: (s: State) => void) => { listeners.add(fn); return () => listeners.delete(fn); }\n  };\n};"
   ],
   python: [
-    "def calculate_moving_average(values: list[float], window_size: int = 5) -> list[float]:\n    if not values or window_size < 1:\n        return []\n    return [sum(values[max(0, i - window_size + 1):i + 1]) / min(i + 1, window_size) for i in range(len(values))]",
-    "@dataclass(frozen=True)\nclass TelemetrySnapshot:\n    timestamp: float\n    net_wpm: float\n    gross_wpm: float\n    accuracy: float\n    active_streak: int = 0",
-    "async def stream_ai_insights(session_id: str, client: AsyncGeminiClient):\n    async for chunk in client.generate_content_stream(prompt=f'Analyze {session_id}'):\n        if chunk.text:\n            yield chunk.text.strip()",
-    "from collections import defaultdict\n\ndef aggregate_finger_errors(records: list[dict]) -> dict[str, int]:\n    error_map = defaultdict(int)\n    for record in records:\n        for key, count in record.get('mistyped', {}).items():\n            error_map[key] += count\n    return dict(sorted(error_map.items(), key=lambda x: x[1], reverse=True))",
-    "import asyncio\n\nasync def worker_queue(queue: asyncio.Queue, results: list):\n    while not queue.empty():\n        task = await queue.get()\n        try:\n            res = await process_task(task)\n            results.append(res)\n        finally:\n            queue.task_done()"
+    "def calculate_wpm(characters, seconds):\n    if seconds <= 0:\n        return 0.0\n    minutes = seconds / 60.0\n    return round((characters / 5.0) / minutes, 2)",
+    "def binary_search(arr, target):\n    low, high = 0, len(arr) - 1\n    while low <= high:\n        mid = (low + high) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            low = mid + 1\n        else:\n            high = mid - 1\n    return -1",
+    "def bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if arr[j] > arr[j + 1]:\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\n    return arr",
+    "def quick_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    mid = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quick_sort(left) + mid + quick_sort(right)",
+    "def is_palindrome(text):\n    cleaned = text.lower().replace(' ', '')\n    return cleaned == cleaned[::-1]",
+    "def fibonacci(limit):\n    a, b = 0, 1\n    results = []\n    while a < limit:\n        results.append(a)\n        a, b = b, a + b\n    return results",
+    "def count_words(sentence):\n    counts = {}\n    for word in sentence.split():\n        counts[word] = counts.get(word, 0) + 1\n    return counts",
+    "class TypingSession:\n    def __init__(self, target_text):\n        self.target = target_text\n        self.typed = []\n        self.errors = 0"
   ],
   rust: [
     "pub struct CaretBuffer {\n    target_words: Vec<String>,\n    active_index: usize,\n    current_input: String,\n}\n\nimpl CaretBuffer {\n    pub fn is_complete(&self) -> bool {\n        self.active_index >= self.target_words.len()\n    }\n}",
