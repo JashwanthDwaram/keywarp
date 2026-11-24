@@ -122,7 +122,7 @@ While you type, it records your inter-key latency and mistake patterns. It then 
 
 KeyWarp includes a clean, standalone desktop application combining **Pygame** for interactive 60 FPS graphics and **Tkinter** for native OS dialogs.
 
-### Architecture (Viva & Defense Friendly)
+### Architecture & System Design
 * **Real-Time Pygame Arena**: High-performance game loop running at 60 FPS that processes keyboard events, renders color-coded character feedback (green for correct, red for errors), animates a blinking caret, and calculates live Net WPM and Accuracy.
 * **Native Tkinter Dialogs**: Uses Python's built-in `tkinter.filedialog` to provide native OS dialogs:
   - **Load Custom File**: Choose any `.txt` or source code file from your computer to practice typing custom material.

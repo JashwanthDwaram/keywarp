@@ -4,7 +4,7 @@ A modular, high-performance typing speed test and analytics application
 combining Pygame (for real-time 60 FPS graphics, caret animations, and input processing)
 with Tkinter (for native OS file dialogs to load custom text files and export results).
 
-Designed for clear presentation, straightforward code structure, and easy viva explanation.
+Designed for modularity, clean architecture, and high-performance typing telemetry.
 """
 
 import sys
