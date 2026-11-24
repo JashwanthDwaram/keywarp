@@ -118,38 +118,16 @@ While you type, it records your inter-key latency and mistake patterns. It then 
 
 ---
 
-## Desktop Application (Pygame + Tkinter)
+## Desktop Application
 
-KeyWarp includes a clean, standalone desktop application combining **Pygame** for interactive 60 FPS graphics and **Tkinter** for native OS dialogs.
+KeyWarp also features a standalone desktop application built with **Pygame** (60 FPS hardware-accelerated arena) and **Tkinter** (native OS dialogs).
 
-### Architecture & System Design
-* **Real-Time Pygame Arena**: High-performance game loop running at 60 FPS that processes keyboard events, renders color-coded character feedback (green for correct, red for errors), animates a blinking caret, and calculates live Net WPM and Accuracy.
-* **Native Tkinter Dialogs**: Uses Python's built-in `tkinter.filedialog` to provide native OS dialogs:
-  - **Load Custom File**: Choose any `.txt` or source code file from your computer to practice typing custom material.
-  - **Export Results**: Save session logs and analytics reports to `.csv` or `.json` formats anywhere on your system.
-* **Typing Metrics Formula**:
-  - `Net WPM = (Correct Characters / 5) / (Elapsed Time in Minutes)`
-  - `Accuracy = (Correct Keystrokes / Total Keystrokes) * 100%`
-  - `CPM = Correct Characters / Elapsed Time in Minutes`
-* **Session Persistence & Visualizer**: Saves test history to CSV/JSON and renders WPM progression charts directly onto the Pygame canvas with zero heavy dependencies.
+The desktop application is maintained in the dedicated [`desktop`](https://github.com/JashwanthDwaram/keywarp/tree/desktop) branch:
 
-### Desktop Setup & Launch
-
-1. Install Python dependencies (`tkinter` is already built into Python):
-   ```bash
-   pip install -r desktop/requirements.txt
-   ```
-
-2. Launch via one-click batch launcher:
-   - Double-click `run_desktop.bat` in the project root, or run:
-   ```bash
-   python desktop/desktop_app.py
-   ```
-
-3. Run automated unit tests:
-   ```bash
-   python -m unittest desktop/tests/test_typing_logic.py
-   ```
+```bash
+git fetch origin desktop
+git checkout desktop
+```
 
 ---
 

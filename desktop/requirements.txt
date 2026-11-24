@@ -1,3 +1,0 @@
-# KeyWarp Desktop Dependencies
-# Note: Tkinter is included in the standard Python installation.
-pygame>=2.5.0
